@@ -1,3 +1,4 @@
+// NavBar.jsx
 import { NavLink, Link, useNavigate } from 'react-router';
 import { logOut } from '../../services/authService';
 import './NavBar.css';
@@ -22,6 +23,8 @@ export default function NavBar({ user, setUser }) {
           </NavLink>
           &nbsp; | &nbsp;
           <NavLink to="/posts/new">New Post</NavLink>
+          &nbsp; | &nbsp;
+          <NavLink to="/profile">Profile</NavLink>
           &nbsp; | &nbsp;
           <Link to="" onClick={handleLogOut}>
             Log Out
