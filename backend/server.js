@@ -21,11 +21,11 @@ app.use(require('./middleware/checkToken'));
 
 // API Routes
 app.use('/api/auth', require('./routes/auth'));
-app.use('/api/spotify', require('./routes/spotify'));
+app.use('/api/spotify', require('./routes/spotify.js'));
+app.use('/api/news', require('./routes/news.js'));
 
 // All routers below will have all routes protected
 app.use(require('./middleware/ensureLoggedIn'));
-
 app.use('/api/posts', require('./routes/posts'));
 
 // Use a "catch-all" route to deliver the frontend's production index.html
