@@ -1,5 +1,6 @@
 const axios = require('axios');
 
+
 async function getNews(req, res) {
   const genre = req.query.genre;
   const url = `https://newsapi.org/v2/everything?q=music ${genre}&sortBy=publishedAt&apiKey=${process.env.NEWS_API_KEY}`;

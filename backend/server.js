@@ -16,17 +16,18 @@ app.use(express.static(path.join(__dirname, '../frontend/dist')));
 // because forms are not submitted!
 app.use(express.json());
 
-// Check & verify token.  If so, add user payload to req.user
+// Check & verify token first
 app.use(require('./middleware/checkToken'));
 
-// API Routes
+// API Routes that don't require authentication
 app.use('/api/auth', require('./routes/auth'));
 app.use('/api/spotify', require('./routes/spotify.js'));
 app.use('/api/news', require('./routes/news.js'));
 
-// All routers below will have all routes protected
+// Protected routes
 app.use(require('./middleware/ensureLoggedIn'));
 app.use('/api/posts', require('./routes/posts'));
+app.use('/api/playlist', require('./routes/playlist'));
 
 // Use a "catch-all" route to deliver the frontend's production index.html
 app.get('*', function (req, res) {

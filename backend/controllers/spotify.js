@@ -34,4 +34,13 @@ async function callback(req, res) {
   }
 }
 
-module.exports = { connect, callback };
+async function status(req, res) {
+  try {
+    const connected = req.user.spotifyAccessToken ? true : false;
+    res.json({ connected });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to check Spotify status' });
+  }
+}
+
+module.exports = { connect, callback, status };
