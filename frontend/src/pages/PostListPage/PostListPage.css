@@ -1,0 +1,11 @@
+.post-item-container {
+  display: grid;
+  grid-template-columns: auto auto auto;
+  gap: 1rem;
+}
+
+.post-item-container > article {
+  border: 0.5vmin dashed rebeccapurple;
+  padding: 2vmin;
+  border-radius: 0.5vmin;
+}
