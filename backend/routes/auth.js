@@ -1,12 +1,13 @@
 const express = require('express');
 const router = express.Router();
-const authCtrl = require('../controllers/auth');
+const authController = require('../controllers/auth');
+const { checkToken } = require('../middleware/checkToken');
 
-// All paths start with '/api/auth'
+// Public routes
+router.post('/signup', authController.signup);
+router.post('/login', authController.login);
 
-// POST /api/auth/signup
-router.post('/signup', authCtrl.signUp);
-// POST /api/auth/login
-router.post('/login', authCtrl.logIn);
+// Protected routes
+router.get('/profile', checkToken, authController.getProfile);
 
 module.exports = router;

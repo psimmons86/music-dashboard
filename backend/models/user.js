@@ -1,42 +1,86 @@
 const mongoose = require('mongoose');
-const Schema = mongoose.Schema;
 const bcrypt = require('bcrypt');
 
-const SALT_ROUNDS = 6;
-
-const userSchema = new Schema(
-  {
-    name: { type: String, required: true },
-    email: {
-      type: String,
-      unique: true,
-      trim: true,
-      lowercase: true,
-      required: true,
-    },
-    password: {
-      type: String,
-      required: true,
-    },
+const userSchema = new mongoose.Schema({
+  name: {
+    type: String,
+    required: true
   },
-  {
-    timestamps: true,
-    // Remove password when doc is sent across network
-    toJSON: {
-      transform: function (doc, ret) {
-        delete ret.password;
-        return ret;
-      },
-    },
+  email: {
+    type: String,
+    required: true,
+    unique: true,
+    lowercase: true
+  },
+  password: {
+    type: String,
+    required: true
+  },
+  spotifyId: {
+    type: String,
+    default: null
+  },
+  spotifyAccessToken: {
+    type: String,
+    default: null
+  },
+  spotifyRefreshToken: {
+    type: String,
+    default: null
+  },
+  favoriteGenres: [{
+    type: String
+  }],
+  profileImage: {
+    type: String,
+    default: null
+  },
+  favorites: [{
+    type: mongoose.Schema.Types.ObjectId,
+    refPath: 'favoriteType'
+  }],
+  favoriteType: {
+    type: String,
+    enum: ['Article', 'Playlist', 'BlogPost']
+  },
+  role: {
+    type: String,
+    enum: ['user', 'admin'],
+    default: 'user'
   }
-);
-
-userSchema.pre('save', async function (next) {
-  // 'this' is the user document
-  if (!this.isModified('password')) return next();
-  // Replace the password with the computed hash
-  this.password = await bcrypt.hash(this.password, SALT_ROUNDS);
-  next();
+}, {
+  timestamps: true
 });
 
-module.exports = mongoose.model('User', userSchema);
+// Hash password before saving
+userSchema.pre('save', async function(next) {
+  if (!this.isModified('password')) return next();
+  
+  try {
+    const salt = await bcrypt.genSalt(10);
+    this.password = await bcrypt.hash(this.password, salt);
+    next();
+  } catch (error) {
+    next(error);
+  }
+});
+
+// Method to compare password for login
+userSchema.methods.comparePassword = async function(candidatePassword) {
+  try {
+    return await bcrypt.compare(candidatePassword, this.password);
+  } catch (error) {
+    throw error;
+  }
+};
+
+// Method to handle Spotify token update
+userSchema.methods.updateSpotifyTokens = function(accessToken, refreshToken) {
+  this.spotifyAccessToken = accessToken;
+  this.spotifyRefreshToken = refreshToken;
+  return this.save();
+};
+
+const User = mongoose.model('User', userSchema);
+
+module.exports = User;
