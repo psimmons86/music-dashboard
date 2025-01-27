@@ -8,7 +8,6 @@ import SignUpPage from '../SignUpPage/SignUpPage';
 import LogInPage from '../LogInPage/LogInPage';
 import NavBar from '../../components/NavBar/NavBar';
 
-// Spotify Callback Component
 function SpotifyCallback() {
   const navigate = useNavigate();
 
@@ -17,18 +16,9 @@ function SpotifyCallback() {
       try {
         const urlParams = new URLSearchParams(window.location.search);
         const code = urlParams.get('code');
-        const error = urlParams.get('error');
         
-        if (error) {
-          console.error('Spotify auth error:', error);
-          navigate('/dashboard');
-          return;
-        }
-
         if (!code) {
-          console.error('No authorization code received');
-          navigate('/dashboard');
-          return;
+          throw new Error('No authorization code received');
         }
 
         const token = getToken();
@@ -37,15 +27,17 @@ function SpotifyCallback() {
           return;
         }
 
-        const response = await fetch(`/api/spotify/callback?code=${code}`, {
+        const response = await fetch(`/api/spotify/callback`, {
+          method: 'POST',
           headers: {
+            'Content-Type': 'application/json',
             'Authorization': `Bearer ${token}`
-          }
+          },
+          body: JSON.stringify({ code })
         });
 
         if (!response.ok) {
-          const errorData = await response.json();
-          throw new Error(errorData.error || 'Failed to connect Spotify');
+          throw new Error('Failed to connect Spotify account');
         }
 
         await response.json();
@@ -63,13 +55,11 @@ function SpotifyCallback() {
     <div className="flex items-center justify-center min-h-screen">
       <div className="text-center">
         <h2 className="text-xl mb-4">Connecting to Spotify...</h2>
-        <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-purple-500 mx-auto"></div>
       </div>
     </div>
   );
 }
 
-// Main App Component
 export default function App() {
   const [user, setUser] = useState(getUser());
 

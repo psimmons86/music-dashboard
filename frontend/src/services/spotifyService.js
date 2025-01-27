@@ -10,7 +10,7 @@ export async function connectSpotify() {
 }
 
 export async function handleCallback(code) {
-  return sendRequest(`${BASE_URL}/callback?code=${code}`);
+  return sendRequest(`${BASE_URL}/callback`, 'POST', { code });
 }
 
 export async function getSpotifyStatus() {

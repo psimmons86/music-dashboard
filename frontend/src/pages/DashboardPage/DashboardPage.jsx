@@ -17,13 +17,15 @@ export default function DashboardPage() {
   useEffect(() => {
     async function fetchData() {
       try {
-        const [postsData, spotifyStatus, articlesData] = await Promise.all([
+        const spotifyStatus = await spotifyService.getSpotifyStatus();
+        console.log('Spotify connection status:', spotifyStatus);
+        setSpotifyConnected(spotifyStatus.connected);
+
+        const [postsData, articlesData] = await Promise.all([
           postService.index(),
-          spotifyService.getSpotifyStatus(),
           articleService.getSavedArticles()
         ]);
         setPosts(postsData);
-        setSpotifyConnected(spotifyStatus.connected);
         setSavedArticles(articlesData);
       } catch (err) {
         console.error('Error loading dashboard:', err);
@@ -31,17 +33,6 @@ export default function DashboardPage() {
     }
     fetchData();
   }, []);
-
-  async function handleDeleteArticle(articleId) {
-    try {
-      await articleService.deleteSavedArticle(articleId);
-      setSavedArticles(prevArticles => 
-        prevArticles.filter(article => article._id !== articleId)
-      );
-    } catch (error) {
-      console.error('Error deleting article:', error);
-    }
-  }
 
   async function handleSubmitPost(evt) {
     evt.preventDefault();
@@ -54,10 +45,18 @@ export default function DashboardPage() {
     }
   }
 
+  async function handleDeleteArticle(articleId) {
+    try {
+      await articleService.deleteSavedArticle(articleId);
+      setSavedArticles(prevArticles => prevArticles.filter(article => article._id !== articleId));
+    } catch (error) {
+      console.error('Error deleting article:', error);
+    }
+  }
+
   return (
     <div className="dashboard-wrapper">
       <div className="dashboard-grid">
-        {/* News Feed Box */}
         <div className="dashboard-box">
           <h2>Music News</h2>
           <div className="scrollable-content">
@@ -65,7 +64,6 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        {/* Social Feed Box */}
         <div className="dashboard-box">
           <h2>Social Feed</h2>
           <div className="scrollable-content">
@@ -88,22 +86,20 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        {/* Spotify Box */}
         <div className="dashboard-box">
           <h2>Music Player</h2>
           <div className="scrollable-content">
-            {spotifyConnected ? (
-              <PlaylistGenerator />
-            ) : (
-              <div className="spotify-connect">
-                <p>Connect with Spotify to create custom playlists</p>
+            {!spotifyConnected ? (
+              <div className="text-center py-12">
+                <p className="text-gray-600 mb-6">Connect Spotify to create playlists</p>
                 <SpotifyConnect />
               </div>
+            ) : (
+              <PlaylistGenerator />
             )}
           </div>
         </div>
 
-        {/* Saved Articles Box */}
         <div className="dashboard-box">
           <h2>Saved Articles</h2>
           <div className="scrollable-content">
@@ -118,16 +114,8 @@ export default function DashboardPage() {
                     <div className="article-actions">
                       <span>{new Date(article.publishedAt).toLocaleDateString()}</span>
                       <div>
-                        <button onClick={() => handleDeleteArticle(article._id)}>
-                          Delete
-                        </button>
-                        <a
-                          href={article.url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                        >
-                          Read
-                        </a>
+                        <button onClick={() => handleDeleteArticle(article._id)}>Delete</button>
+                        <a href={article.url} target="_blank" rel="noopener noreferrer">Read</a>
                       </div>
                     </div>
                   </article>
