@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import * as postService from '../../services/postService';
 import * as spotifyService from '../../services/spotifyService';
+import * as articleService from '../../services/articleService';
 import NewsFeed from '../../components/NewsFeed/NewsFeed';
 import PlaylistGenerator from '../../components/PlaylistGenerator/PlaylistGenerator';
 import PostItem from '../../components/PostItem/PostItem';
@@ -11,20 +12,36 @@ export default function DashboardPage() {
   const [posts, setPosts] = useState([]);
   const [spotifyConnected, setSpotifyConnected] = useState(false);
   const [newPost, setNewPost] = useState('');
+  const [savedArticles, setSavedArticles] = useState([]);
 
   useEffect(() => {
     async function fetchData() {
       try {
-        const postsData = await postService.index();
-        const spotifyStatus = await spotifyService.getSpotifyStatus();
+        const [postsData, spotifyStatus, articlesData] = await Promise.all([
+          postService.index(),
+          spotifyService.getSpotifyStatus(),
+          articleService.getSavedArticles()
+        ]);
         setPosts(postsData);
         setSpotifyConnected(spotifyStatus.connected);
+        setSavedArticles(articlesData);
       } catch (err) {
         console.error('Error loading dashboard:', err);
       }
     }
     fetchData();
   }, []);
+
+  async function handleDeleteArticle(articleId) {
+    try {
+      await articleService.deleteSavedArticle(articleId);
+      setSavedArticles(prevArticles => 
+        prevArticles.filter(article => article._id !== articleId)
+      );
+    } catch (error) {
+      console.error('Error deleting article:', error);
+    }
+  }
 
   async function handleSubmitPost(evt) {
     evt.preventDefault();
@@ -81,6 +98,40 @@ export default function DashboardPage() {
               <div className="spotify-connect">
                 <p>Connect with Spotify to create custom playlists</p>
                 <SpotifyConnect />
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Saved Articles Box */}
+        <div className="dashboard-box">
+          <h2>Saved Articles</h2>
+          <div className="scrollable-content">
+            {savedArticles.length === 0 ? (
+              <p className="text-center text-gray-500 py-4">No saved articles yet</p>
+            ) : (
+              <div className="saved-articles">
+                {savedArticles.map((article) => (
+                  <article key={article._id} className="saved-article">
+                    <h3>{article.title}</h3>
+                    <p>{article.description}</p>
+                    <div className="article-actions">
+                      <span>{new Date(article.publishedAt).toLocaleDateString()}</span>
+                      <div>
+                        <button onClick={() => handleDeleteArticle(article._id)}>
+                          Delete
+                        </button>
+                        <a
+                          href={article.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                        >
+                          Read
+                        </a>
+                      </div>
+                    </div>
+                  </article>
+                ))}
               </div>
             )}
           </div>
