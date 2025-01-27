@@ -19,6 +19,8 @@ export default function NavBar({ user, setUser }) {
         <>
           <NavLink to="/dashboard">Dashboard</NavLink>
           &nbsp; | &nbsp;
+          <NavLink to="/profile">Profile</NavLink>
+          &nbsp; | &nbsp;
           <Link to="" onClick={handleLogOut}>
             Log Out
           </Link>

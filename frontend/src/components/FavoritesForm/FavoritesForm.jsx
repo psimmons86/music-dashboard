@@ -1,18 +1,20 @@
-
 import { useState, useEffect } from 'react';
-import { getFavorites, setFavorites } from '../services/userService';
+import * as userService from '../../services/userService';
 
 export default function FavoritesForm() {
   const [favoriteGenres, setFavoriteGenres] = useState([]);
   const [favoriteMoods, setFavoriteMoods] = useState([]);
   const [error, setError] = useState('');
 
+  const genres = ['Rock', 'Hip Hop', 'Electronic', 'Pop', 'Jazz', 'Classical'];
+  const moods = ['Happy', 'Chill', 'Energetic'];
+
   useEffect(() => {
     async function fetchFavorites() {
       try {
-        const { favoriteGenres, favoriteMoods } = await getFavorites();
-        setFavoriteGenres(favoriteGenres);
-        setFavoriteMoods(favoriteMoods);
+        const { favoriteGenres, favoriteMoods } = await userService.getFavorites();
+        setFavoriteGenres(favoriteGenres || []);
+        setFavoriteMoods(favoriteMoods || []);
       } catch (err) {
         setError('Failed to fetch favorites');
       }
@@ -23,7 +25,7 @@ export default function FavoritesForm() {
   async function handleSubmit(e) {
     e.preventDefault();
     try {
-      await setFavorites({ favoriteGenres, favoriteMoods });
+      await userService.setFavorites({ favoriteGenres, favoriteMoods });
       setError('');
     } catch (err) {
       setError('Failed to save favorites');
@@ -31,25 +33,61 @@ export default function FavoritesForm() {
   }
 
   return (
-    <form onSubmit={handleSubmit}>
+    <form onSubmit={handleSubmit} className="space-y-4">
+      {error && <p className="text-red-600">{error}</p>}
+      
       <div>
-        <label>Favorite Genres</label>
-        <input
-          type="text"
-          value={favoriteGenres.join(', ')}
-          onChange={(e) => setFavoriteGenres(e.target.value.split(',').map(g => g.trim()))}
-        />
+        <label className="block mb-2">Favorite Genres</label>
+        <div className="grid grid-cols-2 gap-2">
+          {genres.map(genre => (
+            <label key={genre} className="flex items-center">
+              <input
+                type="checkbox"
+                checked={favoriteGenres.includes(genre)}
+                onChange={(e) => {
+                  if (e.target.checked) {
+                    setFavoriteGenres([...favoriteGenres, genre]);
+                  } else {
+                    setFavoriteGenres(favoriteGenres.filter(g => g !== genre));
+                  }
+                }}
+                className="mr-2"
+              />
+              {genre}
+            </label>
+          ))}
+        </div>
       </div>
+
       <div>
-        <label>Favorite Moods</label>
-        <input
-          type="text"
-          value={favoriteMoods.join(', ')}
-          onChange={(e) => setFavoriteMoods(e.target.value.split(',').map(m => m.trim()))}
-        />
+        <label className="block mb-2">Favorite Moods</label>
+        <div className="grid grid-cols-2 gap-2">
+          {moods.map(mood => (
+            <label key={mood} className="flex items-center">
+              <input
+                type="checkbox"
+                checked={favoriteMoods.includes(mood)}
+                onChange={(e) => {
+                  if (e.target.checked) {
+                    setFavoriteMoods([...favoriteMoods, mood]);
+                  } else {
+                    setFavoriteMoods(favoriteMoods.filter(m => m !== mood));
+                  }
+                }}
+                className="mr-2"
+              />
+              {mood}
+            </label>
+          ))}
+        </div>
       </div>
-      {error && <p>{error}</p>}
-      <button type="submit">Save Favorites</button>
+
+      <button 
+        type="submit"
+        className="w-full bg-purple-600 text-white p-2 rounded hover:bg-purple-700"
+      >
+        Save Preferences
+      </button>
     </form>
   );
 }
