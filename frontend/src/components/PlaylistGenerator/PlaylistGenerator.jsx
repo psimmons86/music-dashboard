@@ -11,7 +11,7 @@ export default function PlaylistGenerator() {
   const [success, setSuccess] = useState('');
   const [loading, setLoading] = useState(false);
   const [genres, setGenres] = useState([]); // State to store available genres
-  const moods = ['Happy', 'Chill', 'Energetic'];
+  const moods = ['Happy', 'Chill', 'Energetic', 'Sad', 'Angry'];
 
   useEffect(() => {
     async function fetchGenreSeeds() {
