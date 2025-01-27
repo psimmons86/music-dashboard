@@ -39,6 +39,7 @@ export default function LogInPage({ setUser }) {
           value={formData.email}
           onChange={handleChange}
           required
+          autoComplete="username"
         />
         <label>Password</label>
         <input
@@ -47,6 +48,7 @@ export default function LogInPage({ setUser }) {
           value={formData.password}
           onChange={handleChange}
           required
+          autoComplete="current-password"
         />
         <button type="submit">LOG IN</button>
       </form>

@@ -7,5 +7,6 @@ router.get('/connect', checkToken, spotifyCtrl.connect);
 router.post('/callback', checkToken, spotifyCtrl.callback);
 router.get('/status', checkToken, spotifyCtrl.status);
 router.post('/disconnect', checkToken, spotifyCtrl.disconnect);
+router.get('/genre-seeds', checkToken, spotifyCtrl.getAvailableGenreSeeds); // New route for genre seeds
 
 module.exports = router;

@@ -65,4 +65,41 @@ async function disconnect(req, res) {
   }
 }
 
-module.exports = { connect, callback, status, disconnect };
+async function getAvailableGenreSeeds(req, res) {
+  try {
+    const user = await User.findById(req.user._id);
+
+    if (!user.spotifyAccessToken) {
+      return res.status(401).json({ error: 'No Spotify connection found' });
+    }
+
+    // Log the access token for debugging
+    console.log('Spotify Access Token:', user.spotifyAccessToken);
+
+    // Check if the token is expired
+    if (user.spotifyTokenExpiry && new Date() > new Date(user.spotifyTokenExpiry)) {
+      return res.status(401).json({ error: 'Spotify access token expired. Please reconnect.' });
+    }
+
+    spotifyApi.setAccessToken(user.spotifyAccessToken);
+
+    // Fetch available genre seeds
+    const genreSeeds = await spotifyApi.getAvailableGenreSeeds();
+    
+    // Filter genres to only include the selected ones
+    const selectedGenres = ["alternative", "ambient", "electronic", "emo", "hip-hop", "indie", "indie-pop", "k-pop", "pop", "rock", "synth-pop"];
+    const filteredGenres = genreSeeds.body.genres.filter(genre => selectedGenres.includes(genre));
+
+    res.json({ genres: filteredGenres });
+  } catch (error) {
+    console.error('Error fetching genre seeds:', {
+      message: error.message,
+      statusCode: error.statusCode,
+      body: error.body,
+      headers: error.headers
+    });
+    res.status(500).json({ error: 'Failed to fetch genre seeds', details: error.message });
+  }
+}
+
+module.exports = { connect, callback, status, disconnect, getAvailableGenreSeeds };

@@ -25,3 +25,12 @@ export async function getSpotifyStatus() {
 export async function disconnectSpotify() {
   return sendRequest(`${BASE_URL}/disconnect`, 'POST');
 }
+
+export async function getAvailableGenreSeeds() {
+  try {
+    return await sendRequest(`${BASE_URL}/genre-seeds`);
+  } catch (error) {
+    console.error('Error fetching genre seeds:', error);
+    throw error;
+  }
+}

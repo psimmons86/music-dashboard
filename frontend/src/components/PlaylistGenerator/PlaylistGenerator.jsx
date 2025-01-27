@@ -1,5 +1,6 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import * as playlistService from '../../services/playlistService';
+import * as spotifyService from '../../services/spotifyService';
 
 export default function PlaylistGenerator() {
   const [formData, setFormData] = useState({
@@ -9,9 +10,21 @@ export default function PlaylistGenerator() {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [loading, setLoading] = useState(false);
-
-  const genres = ['Rock', 'Hip Hop', 'Electronic', 'Pop', 'Jazz', 'Classical'];
+  const [genres, setGenres] = useState([]); // State to store available genres
   const moods = ['Happy', 'Chill', 'Energetic'];
+
+  useEffect(() => {
+    async function fetchGenreSeeds() {
+      try {
+        const genreSeeds = await spotifyService.getAvailableGenreSeeds();
+        setGenres(genreSeeds.genres); // Set the filtered genres
+      } catch (error) {
+        console.error('Error fetching genre seeds:', error);
+      }
+    }
+
+    fetchGenreSeeds();
+  }, []);
 
   function generatePlaylistName(genre, mood) {
     const date = new Date().toLocaleDateString('en-US', { 
