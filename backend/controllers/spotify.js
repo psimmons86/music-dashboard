@@ -73,32 +73,36 @@ async function getAvailableGenreSeeds(req, res) {
       return res.status(401).json({ error: 'No Spotify connection found' });
     }
 
-    // Log the access token for debugging
-    console.log('Spotify Access Token:', user.spotifyAccessToken);
+    await refreshTokenIfNeeded(user, spotifyApi);
 
-    // Check if the token is expired
-    if (user.spotifyTokenExpiry && new Date() > new Date(user.spotifyTokenExpiry)) {
-      return res.status(401).json({ error: 'Spotify access token expired. Please reconnect.' });
-    }
-
-    spotifyApi.setAccessToken(user.spotifyAccessToken);
-
-    // Fetch available genre seeds
     const genreSeeds = await spotifyApi.getAvailableGenreSeeds();
-    
-    // Filter genres to only include the selected ones
     const selectedGenres = ["alternative", "ambient", "electronic", "emo", "hip-hop", "indie", "indie-pop", "k-pop", "pop", "rock", "synth-pop"];
     const filteredGenres = genreSeeds.body.genres.filter(genre => selectedGenres.includes(genre));
 
     res.json({ genres: filteredGenres });
   } catch (error) {
-    console.error('Error fetching genre seeds:', {
-      message: error.message,
-      statusCode: error.statusCode,
-      body: error.body,
-      headers: error.headers
-    });
+    console.error('Error fetching genre seeds:', error);
     res.status(500).json({ error: 'Failed to fetch genre seeds', details: error.message });
+  }
+}
+
+async function refreshTokenIfNeeded(user, spotifyApi) {
+  if (user.spotifyTokenExpiry && new Date() > new Date(user.spotifyTokenExpiry)) {
+    try {
+      const data = await spotifyApi.refreshAccessToken();
+      const { access_token, expires_in } = data.body;
+
+      await User.findByIdAndUpdate(user._id, {
+        spotifyAccessToken: access_token,
+        spotifyTokenExpiry: new Date(Date.now() + expires_in * 1000)
+      });
+
+      spotifyApi.setAccessToken(access_token);
+    } catch (error) {
+      throw new Error('Failed to refresh Spotify access token. Please reconnect.');
+    }
+  } else {
+    spotifyApi.setAccessToken(user.spotifyAccessToken);
   }
 }
 

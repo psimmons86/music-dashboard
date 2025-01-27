@@ -10,14 +10,14 @@ export default function PlaylistGenerator() {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [loading, setLoading] = useState(false);
-  const [genres, setGenres] = useState([]); // State to store available genres
+  const [genres, setGenres] = useState([]);
   const moods = ['Happy', 'Chill', 'Energetic', 'Sad', 'Angry'];
 
   useEffect(() => {
     async function fetchGenreSeeds() {
       try {
         const genreSeeds = await spotifyService.getAvailableGenreSeeds();
-        setGenres(genreSeeds.genres); // Set the filtered genres
+        setGenres(genreSeeds.genres);
       } catch (error) {
         console.error('Error fetching genre seeds:', error);
       }
