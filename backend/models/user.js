@@ -28,6 +28,10 @@ const userSchema = new mongoose.Schema({
     type: String,
     default: null
   },
+  spotifyTokenExpiry: {
+    type: Date,
+    default: null
+  },
   favoriteGenres: [{
     type: String
   }],
@@ -38,6 +42,12 @@ const userSchema = new mongoose.Schema({
   favorites: [{
     type: mongoose.Schema.Types.ObjectId,
     refPath: 'favoriteType'
+  }],
+  favoriteGenres: [{
+    type: String
+  }],
+  favoriteMoods: [{
+    type: String
   }],
   favoriteType: {
     type: String,

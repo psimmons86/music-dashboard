@@ -12,10 +12,10 @@ export default function FavoritesForm() {
   useEffect(() => {
     async function fetchFavorites() {
       try {
-        const { favoriteGenres, favoriteMoods } = await userService.getFavorites();
-        setFavoriteGenres(favoriteGenres || []);
-        setFavoriteMoods(favoriteMoods || []);
-      } catch (err) {
+        const response = await userService.getFavorites();
+        setFavoriteGenres(response.favoriteGenres || []);
+        setFavoriteMoods(response.favoriteMoods || []);
+      } catch (error) {
         setError('Failed to fetch favorites');
       }
     }

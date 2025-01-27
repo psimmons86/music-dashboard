@@ -1,10 +1,10 @@
 const User = require('../models/user');
 const jwt = require('jsonwebtoken');
 
-async function createJWT(user) {
+function createJWT(user) {
   return jwt.sign(
-    { _id: user._id, role: user.role },
-    process.env.JWT_SECRET,
+    { user: { _id: user._id, name: user.name, email: user.email, role: user.role } },
+    process.env.SECRET,
     { expiresIn: '24h' }
   );
 }

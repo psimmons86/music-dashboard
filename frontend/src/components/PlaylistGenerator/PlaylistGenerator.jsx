@@ -3,56 +3,76 @@ import * as playlistService from '../../services/playlistService';
 
 export default function PlaylistGenerator() {
   const [formData, setFormData] = useState({
-    name: '',
     genre: '',
     mood: ''
   });
   const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
+  const [loading, setLoading] = useState(false);
 
   const genres = ['Rock', 'Hip Hop', 'Electronic', 'Pop', 'Jazz', 'Classical'];
   const moods = ['Happy', 'Chill', 'Energetic'];
+
+  function generatePlaylistName(genre, mood) {
+    const date = new Date().toLocaleDateString('en-US', { 
+      month: 'short', 
+      day: 'numeric'
+    });
+    return `${date} - ${mood} ${genre} Mix`;
+  }
 
   async function handleSubmit(e) {
     e.preventDefault();
     try {
       setError('');
-      if (!formData.name || !formData.genre || !formData.mood) {
-        setError('Please fill in all fields');
+      setSuccess('');
+      setLoading(true);
+      
+      if (!formData.genre || !formData.mood) {
+        setError('Please select both genre and mood');
         return;
       }
-      await playlistService.create(formData);
-      // Reset form after successful creation
+
+      const playlistData = {
+        ...formData,
+        name: generatePlaylistName(formData.genre, formData.mood)
+      };
+
+      console.log('Creating playlist:', playlistData);
+      const response = await playlistService.create(playlistData);
+      console.log('Playlist created:', response);
+      
+      setSuccess(`Playlist "${playlistData.name}" created! Open in Spotify: ${response.url}`);
       setFormData({
-        name: '',
         genre: '',
         mood: ''
       });
     } catch (err) {
-      setError('Failed to create playlist. Please make sure you are connected to Spotify.');
-      console.error('Error:', err);
+      console.error('Playlist creation error:', err);
+      setError(err.message || 'Failed to create playlist. Please try reconnecting to Spotify.');
+    } finally {
+      setLoading(false);
     }
   }
 
   return (
     <div className="max-w-md mx-auto p-6">
       <h2 className="text-2xl font-bold mb-4">Create Playlist</h2>
+      
       {error && (
         <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
           {error}
         </div>
       )}
-      <form onSubmit={handleSubmit} className="space-y-4">
-        <div>
-          <label className="block mb-1">Playlist Name</label>
-          <input
-            type="text"
-            value={formData.name}
-            onChange={(e) => setFormData({...formData, name: e.target.value})}
-            className="w-full p-2 border rounded"
-            required
-          />
+      
+      {success && (
+        <div className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded mb-4">
+          <a href={success.split(': ')[1]} target="_blank" rel="noopener noreferrer" 
+             className="underline">{success}</a>
         </div>
-        
+      )}
+
+      <form onSubmit={handleSubmit} className="space-y-4">
         <div>
           <label className="block mb-1">Genre</label>
           <select 
@@ -60,6 +80,7 @@ export default function PlaylistGenerator() {
             onChange={(e) => setFormData({...formData, genre: e.target.value})}
             className="w-full p-2 border rounded"
             required
+            disabled={loading}
           >
             <option value="">Select Genre</option>
             {genres.map(g => (
@@ -75,6 +96,7 @@ export default function PlaylistGenerator() {
             onChange={(e) => setFormData({...formData, mood: e.target.value})}
             className="w-full p-2 border rounded"
             required
+            disabled={loading}
           >
             <option value="">Select Mood</option>
             {moods.map(m => (
@@ -85,9 +107,10 @@ export default function PlaylistGenerator() {
 
         <button 
           type="submit"
-          className="w-full bg-green-500 text-white p-2 rounded hover:bg-green-600"
+          className="w-full bg-green-500 text-white p-2 rounded hover:bg-green-600 disabled:bg-gray-400"
+          disabled={loading}
         >
-          Generate Playlist
+          {loading ? 'Creating Playlist...' : 'Generate Playlist'}
         </button>
       </form>
     </div>

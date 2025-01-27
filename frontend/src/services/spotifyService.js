@@ -21,3 +21,7 @@ export async function getSpotifyStatus() {
     return { connected: false };
   }
 }
+
+export async function disconnectSpotify() {
+  return sendRequest(`${BASE_URL}/disconnect`, 'POST');
+}
