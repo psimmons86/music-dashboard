@@ -21,7 +21,7 @@ export default function LogInPage({ setUser }) {
     try {
       const user = await authService.logIn(formData);
       setUser(user);
-      navigate('/posts');
+      navigate('/dashboard');
     } catch (err) {
       console.log(err);
       setErrorMsg('Log In Failed - Try Again');

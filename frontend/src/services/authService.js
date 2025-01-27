@@ -9,9 +9,9 @@ export async function signUp(userData) {
 }
 
 export async function logIn(credentials) {
-  const token = await sendRequest(`${BASE_URL}/login`, 'POST', credentials);
-  localStorage.setItem('token', token);
-  return getUser();
+  const response = await sendRequest(`${BASE_URL}/login`, 'POST', credentials);
+  localStorage.setItem('token', response.token);
+  return response.user;
 }
 
 export function logOut() {
