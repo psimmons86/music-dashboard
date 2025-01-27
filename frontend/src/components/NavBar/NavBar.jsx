@@ -1,11 +1,14 @@
-import { Link, NavLink } from 'react-router';
+import { NavLink, Link, useNavigate } from 'react-router';
 import { logOut } from '../../services/authService';
 import './NavBar.css';
 
 export default function NavBar({ user, setUser }) {
+  const navigate = useNavigate();
+
   function handleLogOut() {
     logOut();
     setUser(null);
+    navigate('/');
   }
 
   return (
@@ -14,16 +17,6 @@ export default function NavBar({ user, setUser }) {
       &nbsp; | &nbsp;
       {user ? (
         <>
-          <NavLink to="/news">News</NavLink>
-          &nbsp; | &nbsp;
-          <NavLink to="/posts" end>
-            Post List
-          </NavLink>
-          &nbsp; | &nbsp;
-          <NavLink to="/posts/new">New Post</NavLink>
-          &nbsp; | &nbsp;
-          <NavLink to="/profile">Profile</NavLink>
-          &nbsp; | &nbsp;
           <NavLink to="/dashboard">Dashboard</NavLink>
           &nbsp; | &nbsp;
           <Link to="" onClick={handleLogOut}>

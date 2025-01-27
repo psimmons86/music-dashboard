@@ -1,0 +1,138 @@
+.landing-page {
+    min-height: calc(100vh - 60px);
+    background: linear-gradient(135deg, #1a237e 0%, #311b92 50%, #4a148c 100%);
+    padding: 40px 20px;
+    color: white;
+  }
+  
+  .hero-section {
+    text-align: center;
+    margin-bottom: 60px;
+  }
+  
+  .hero-section h1 {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+  }
+  
+  .hero-section p {
+    font-size: 1.2rem;
+    opacity: 0.9;
+  }
+  
+  .preview-sections {
+    max-width: 1200px;
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 30px;
+    padding: 20px;
+  }
+  
+  .preview-box {
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+    border-radius: 15px;
+    padding: 25px;
+    display: flex;
+    flex-direction: column;
+    height: 400px;
+    transition: transform 0.3s ease;
+  }
+  
+  .preview-box:hover {
+    transform: translateY(-5px);
+  }
+  
+  .preview-box h2 {
+    color: white;
+    margin-bottom: 20px;
+    font-size: 1.5rem;
+  }
+  
+  .preview-content {
+    flex: 1;
+    overflow-y: auto;
+    margin-bottom: 20px;
+  }
+  
+  .cta-button {
+    background: #6c0957;
+    color: white;
+    padding: 12px 24px;
+    border-radius: 8px;
+    text-align: center;
+    text-decoration: none;
+    font-weight: bold;
+    transition: background-color 0.3s ease;
+  }
+  
+  .cta-button:hover {
+    background: #4a0442;
+  }
+  
+  .features-list {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+  }
+  
+  .feature-item {
+    padding: 15px;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 8px;
+  }
+  
+  .feature-item h3 {
+    color: #e4b3ff;
+    margin-bottom: 8px;
+  }
+  
+  .feature-item p {
+    opacity: 0.9;
+    font-size: 0.9rem;
+  }
+  
+  .mood-genres-preview ul {
+    list-style: none;
+    padding: 0;
+  }
+  
+  .mood-genres-preview li {
+    padding: 8px 0;
+    opacity: 0.9;
+  }
+  
+  /* Custom Scrollbar */
+  .preview-content {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255, 255, 255, 0.3) transparent;
+  }
+  
+  .preview-content::-webkit-scrollbar {
+    width: 6px;
+  }
+  
+  .preview-content::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  
+  .preview-content::-webkit-scrollbar-thumb {
+    background-color: rgba(255, 255, 255, 0.3);
+    border-radius: 10px;
+  }
+  
+  @media (max-width: 768px) {
+    .hero-section h1 {
+      font-size: 2rem;
+    }
+    
+    .preview-sections {
+      grid-template-columns: 1fr;
+    }
+    
+    .preview-box {
+      height: auto;
+      min-height: 350px;
+    }
+  }

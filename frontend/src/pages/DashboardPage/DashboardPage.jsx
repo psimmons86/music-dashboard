@@ -10,53 +10,79 @@ import './DashboardPage.css';
 export default function DashboardPage() {
   const [posts, setPosts] = useState([]);
   const [spotifyConnected, setSpotifyConnected] = useState(false);
+  const [newPost, setNewPost] = useState('');
 
   useEffect(() => {
-    async function fetchPosts() {
-      const posts = await postService.index();
-      setPosts(posts);
+    async function fetchData() {
+      try {
+        const postsData = await postService.index();
+        const spotifyStatus = await spotifyService.getSpotifyStatus();
+        setPosts(postsData);
+        setSpotifyConnected(spotifyStatus.connected);
+      } catch (err) {
+        console.error('Error loading dashboard:', err);
+      }
     }
-    async function checkSpotifyStatus() {
-      const status = await spotifyService.getSpotifyStatus();
-      setSpotifyConnected(status.connected);
-    }
-    fetchPosts();
-    checkSpotifyStatus();
+    fetchData();
   }, []);
 
+  async function handleSubmitPost(evt) {
+    evt.preventDefault();
+    try {
+      const post = await postService.create(newPost);
+      setPosts([post, ...posts]);
+      setNewPost('');
+    } catch (err) {
+      console.error('Error creating post:', err);
+    }
+  }
+
   return (
-    <div className="dashboard-container">
-      <h1>Dashboard</h1>
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* News Feed Section */}
-        <div className="lg:col-span-2">
-          <div className="bg-white rounded-lg shadow p-6">
-            <h2>Music News</h2>
+    <div className="dashboard-wrapper">
+      <div className="dashboard-grid">
+        {/* News Feed Box */}
+        <div className="dashboard-box">
+          <h2>Music News</h2>
+          <div className="scrollable-content">
             <NewsFeed />
           </div>
         </div>
 
-        {/* Right Sidebar */}
-        <div className="space-y-6">
-          {/* Spotify Section */}
-          <div className="bg-white rounded-lg shadow p-6">
-            <h2>Daily Mix</h2>
+        {/* Social Feed Box */}
+        <div className="dashboard-box">
+          <h2>Social Feed</h2>
+          <div className="scrollable-content">
+            <form onSubmit={handleSubmitPost} className="post-form">
+              <textarea
+                value={newPost}
+                onChange={(e) => setNewPost(e.target.value)}
+                placeholder="Share your music thoughts..."
+                required
+              />
+              <button type="submit">Post</button>
+            </form>
+            <div className="posts-container">
+              {posts.map(post => (
+                <div key={post._id} className="post-item">
+                  <PostItem post={post} />
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* Spotify Box */}
+        <div className="dashboard-box">
+          <h2>Music Player</h2>
+          <div className="scrollable-content">
             {spotifyConnected ? (
               <PlaylistGenerator />
             ) : (
-              <div className="text-center">
-                <p>Connect with Spotify to create playlists</p>
+              <div className="spotify-connect">
+                <p>Connect with Spotify to create custom playlists</p>
                 <SpotifyConnect />
               </div>
             )}
-          </div>
-
-          {/* Social Feed */}
-          <div className="bg-white rounded-lg shadow p-6">
-            <h2>Recent Activity</h2>
-            {posts.map(post => (
-              <PostItem key={post._id} post={post} />
-            ))}
           </div>
         </div>
       </div>
