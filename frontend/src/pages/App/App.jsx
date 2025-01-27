@@ -4,6 +4,7 @@ import { getUser, getToken } from '../../services/authService';
 import './App.css';
 import HomePage from '../HomePage/HomePage';
 import DashboardPage from '../DashboardPage/DashboardPage';
+import ProfilePage from '../ProfilePage/ProfilePage';
 import SignUpPage from '../SignUpPage/SignUpPage';
 import LogInPage from '../LogInPage/LogInPage';
 import NavBar from '../../components/NavBar/NavBar';
@@ -71,6 +72,7 @@ export default function App() {
           <Routes>
             <Route path="/" element={<HomePage />} />
             <Route path="/dashboard" element={<DashboardPage />} />
+            <Route path="/profile" element={<ProfilePage user={user} />} />
             <Route path="/auth/spotify/callback" element={<SpotifyCallback />} />
           </Routes>
         ) : (

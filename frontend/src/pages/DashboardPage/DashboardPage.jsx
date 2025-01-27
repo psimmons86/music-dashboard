@@ -13,6 +13,7 @@ export default function DashboardPage() {
   const [spotifyConnected, setSpotifyConnected] = useState(false);
   const [newPost, setNewPost] = useState('');
   const [savedArticles, setSavedArticles] = useState([]);
+  const [error, setError] = useState('');
 
   useEffect(() => {
     async function fetchData() {
@@ -23,12 +24,14 @@ export default function DashboardPage() {
 
         const [postsData, articlesData] = await Promise.all([
           postService.index(),
-          articleService.getSavedArticles()
+          articleService.getSavedArticles(),
         ]);
         setPosts(postsData);
         setSavedArticles(articlesData);
+        setError('');
       } catch (err) {
         console.error('Error loading dashboard:', err);
+        setError('Failed to load dashboard data. Please try again.');
       }
     }
     fetchData();
@@ -48,7 +51,7 @@ export default function DashboardPage() {
   async function handleDeleteArticle(articleId) {
     try {
       await articleService.deleteSavedArticle(articleId);
-      setSavedArticles(prevArticles => prevArticles.filter(article => article._id !== articleId));
+      setSavedArticles((prevArticles) => prevArticles.filter((article) => article._id !== articleId));
     } catch (error) {
       console.error('Error deleting article:', error);
     }
@@ -77,7 +80,7 @@ export default function DashboardPage() {
               <button type="submit">Post</button>
             </form>
             <div className="posts-container">
-              {posts.map(post => (
+              {posts.map((post) => (
                 <div key={post._id} className="post-item">
                   <PostItem post={post} />
                 </div>
