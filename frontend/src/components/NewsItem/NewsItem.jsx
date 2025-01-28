@@ -16,17 +16,30 @@ export default function NewsItem({ article }) {
   }
 
   return (
-    <article className="bg-white/50 rounded-lg p-4 mb-4 last:mb-0">
-      <h3 className="font-bold text-sm mb-2 line-clamp-2">{article.title}</h3>
-      <p className="text-sm text-gray-600 mb-2 line-clamp-2">{article.description}</p>
-      <div className="flex justify-between items-center text-xs">
+    <article className="bg-white rounded-lg p-4 shadow-sm hover:shadow-md transition-shadow">
+      {article.urlToImage && (
+        <div className="aspect-video mb-3 overflow-hidden rounded-lg">
+          <img 
+            src={article.urlToImage} 
+            alt={article.title}
+            className="w-full h-full object-cover"
+          />
+        </div>
+      )}
+      <h3 className="font-semibold text-lg mb-2 line-clamp-2 text-gray-800">
+        {article.title}
+      </h3>
+      <p className="text-gray-600 mb-3 line-clamp-2">
+        {article.description}
+      </p>
+      <div className="flex justify-between items-center text-sm">
         <span className="text-gray-500">
           {new Date(article.publishedAt).toLocaleDateString()}
         </span>
-        <div className="flex gap-2">
+        <div className="flex gap-3">
           <button
             onClick={handleSaveArticle}
-            className="text-purple-600 hover:text-purple-800 px-2 py-1 rounded-md border border-purple-600 hover:border-purple-800"
+            className="text-purple-600 hover:text-purple-700 px-3 py-1 rounded-md border border-purple-600 hover:border-purple-700 transition-colors"
           >
             Save
           </button>
@@ -34,7 +47,7 @@ export default function NewsItem({ article }) {
             href={article.url} 
             target="_blank" 
             rel="noopener noreferrer"
-            className="text-purple-600 hover:text-purple-800"
+            className="text-purple-600 hover:text-purple-700 px-3 py-1 rounded-md border border-purple-600 hover:border-purple-700 transition-colors"
           >
             Read
           </a>
