@@ -1,4 +1,3 @@
-
 const express = require('express');
 const router = express.Router();
 const authController = require('../controllers/auth');
@@ -14,22 +13,30 @@ router.post('/login', authController.login);
 router.get('/profile', checkToken, authController.getProfile);
 
 // Admin routes
-router.post('/update-role', checkToken, ensureAdmin, authController.updateUserRole);
+router.post('/update-role', checkToken, ensureAdmin, async (req, res) => {
+  try {
+    const { userId, role, secretKey } = req.body;
 
-// Temporary admin maker route
-router.post('/make-admin', async (req, res) => {
-   try {
-     const userEmail = "hadroncollides@gmail.com"; 
-     const user = await User.findOne({ email: userEmail });
-     if (!user) return res.status(404).json({ message: 'User not found' });
-     
-     user.role = 'admin';
-     await user.save();
-     
-     res.json({ message: 'Admin role granted successfully' });
-   } catch (error) {
-     res.status(500).json({ message: error.message });
-   }
+    // Verify admin secret key
+    if (secretKey !== process.env.ADMIN_SECRET_CODE) {
+      return res.status(401).json({ message: 'Invalid admin secret key' });
+    }
+
+    // Check if user exists
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    // Update role
+    user.role = role;
+    await user.save();
+
+    res.json({ message: 'User role updated successfully' });
+  } catch (error) {
+    console.error('Update user role error:', error);
+    res.status(500).json({ message: 'Error updating user role' });
+  }
 });
 
 module.exports = router;

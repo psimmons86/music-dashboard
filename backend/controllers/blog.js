@@ -1,7 +1,8 @@
+
 const Blog = require('../models/blog');
 
 const blogController = {
-  // Create new blog post
+
   async create(req, res) {
     try {
       const blog = new Blog({
@@ -16,7 +17,7 @@ const blogController = {
     }
   },
 
-  // Get all blog posts
+
   async getAll(req, res) {
     try {
       const blogs = await Blog.find()
@@ -29,7 +30,7 @@ const blogController = {
     }
   },
 
-  // Get single blog post
+
   async getOne(req, res) {
     try {
       const blog = await Blog.findById(req.params.id)
@@ -39,7 +40,7 @@ const blogController = {
         return res.status(404).json({ error: 'Blog post not found' });
       }
 
-      // Increment view count
+
       blog.viewCount += 1;
       await blog.save();
 
@@ -50,7 +51,7 @@ const blogController = {
     }
   },
 
-  // Update blog post (only author can update)
+
   async update(req, res) {
     try {
       const blog = await Blog.findOne({
@@ -71,7 +72,6 @@ const blogController = {
     }
   },
 
-  // Delete blog post (only author can delete)
   async delete(req, res) {
     try {
       const blog = await Blog.findOneAndDelete({
@@ -90,7 +90,7 @@ const blogController = {
     }
   },
 
-  // Get user's blog posts
+
   async getUserBlogs(req, res) {
     try {
       const blogs = await Blog.find({ author: req.user._id })

@@ -1,3 +1,4 @@
+
 const path = require('path');
 const express = require('express');
 const logger = require('morgan');
@@ -7,11 +8,12 @@ const app = express();
 require('dotenv').config();
 require('./db');
 
-// Middleware
+
 app.use(logger('dev'));
-app.use(cors()); // Add CORS middleware
+app.use(cors()); 
 app.use(express.static(path.join(__dirname, '../frontend/dist')));
 app.use(express.json());
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // Public Routes
 app.use('/api/auth', require('./routes/auth'));
@@ -26,9 +28,8 @@ app.use('/api/articles', require('./routes/articles'));
 app.use('/api/news', require('./routes/news'));
 app.use('/api/user', require('./routes/user'));
 app.use('/api/posts', require('./routes/posts'));
-app.use('/api/blog', require('./routes/blog'));
 app.use('/api/playlist', require('./routes/playlist'));
-
+app.use('/api/blog', require('./routes/blog'));
 
 // Catch-all route
 app.get('*', function (req, res) {
@@ -38,5 +39,5 @@ app.get('*', function (req, res) {
 const port = process.env.PORT || 3000;
 
 app.listen(port, () => {
-  console.log(`The express app is listening on ${port}`);
+  console.log(`Express app is running on port ${port}`);
 });

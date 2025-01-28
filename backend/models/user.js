@@ -16,6 +16,32 @@ const userSchema = new mongoose.Schema({
     type: String,
     required: true
   },
+  profilePicture: {
+    type: String,
+    default: '/default-profile.png'
+  },
+  bio: {
+    type: String,
+    default: ''
+  },
+  socialLinks: {
+    discogs: {
+      type: String,
+      default: ''
+    },
+    vinylVault: {
+      type: String,
+      default: ''
+    },
+    lastFm: {
+      type: String,
+      default: ''
+    }
+  },
+  location: {
+    type: String,
+    default: ''
+  },
   spotifyAccessToken: {
     type: String,
     default: null

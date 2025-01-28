@@ -2,11 +2,11 @@ const Article = require('../models/article');
 
 async function saveArticle(req, res) {
   try {
-    // Log the incoming request data and user
+
     console.log('Received article data:', req.body);
     console.log('User from request:', req.user);
 
-    // Make sure we have a user
+
     if (!req.user) {
       return res.status(401).json({ error: 'No user found in request' });
     }
@@ -17,7 +17,7 @@ async function saveArticle(req, res) {
       url: req.body.url,
       urlToImage: req.body.urlToImage || '',
       publishedAt: req.body.publishedAt ? new Date(req.body.publishedAt) : new Date(),
-      user: req.user._id  // Add the user ID from the request
+      user: req.user._id 
     });
 
     await article.save();
