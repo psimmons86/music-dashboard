@@ -1,6 +1,16 @@
 const SpotifyWebApi = require('spotify-web-api-node');
 const User = require('../models/user');
 
+const SCOPES = [
+  'user-read-private',
+  'playlist-modify-public',
+  'playlist-modify-private',
+  'user-top-read',
+  'playlist-read-private',
+  'playlist-read-collaborative',
+  'user-read-email'
+];
+
 const spotifyApi = new SpotifyWebApi({
   clientId: process.env.SPOTIFY_CLIENT_ID,
   clientSecret: process.env.SPOTIFY_CLIENT_SECRET,
@@ -9,9 +19,8 @@ const spotifyApi = new SpotifyWebApi({
 
 async function connect(req, res) {
   try {
-    const scopes = ['user-read-private', 'playlist-modify-public', 'playlist-modify-private'];
     const state = Math.random().toString(36).substring(7);
-    const authorizeURL = spotifyApi.createAuthorizeURL(scopes, state);
+    const authorizeURL = spotifyApi.createAuthorizeURL(SCOPES, state);
     res.json({ url: authorizeURL });
   } catch (error) {
     console.error('Spotify connect error:', error);
@@ -25,10 +34,15 @@ async function callback(req, res) {
     const data = await spotifyApi.authorizationCodeGrant(code);
     const { access_token, refresh_token, expires_in } = data.body;
 
+    // Verify the user's granted scopes
+    spotifyApi.setAccessToken(access_token);
+    const me = await spotifyApi.getMe();
+    
     await User.findByIdAndUpdate(req.user._id, {
       spotifyAccessToken: access_token,
       spotifyRefreshToken: refresh_token,
-      spotifyTokenExpiry: new Date(Date.now() + expires_in * 1000)
+      spotifyTokenExpiry: new Date(Date.now() + expires_in * 1000),
+      spotifyId: me.body.id  // Save the Spotify user ID
     });
 
     res.json({ success: true });
@@ -37,6 +51,7 @@ async function callback(req, res) {
     res.status(500).json({ error: error.message });
   }
 }
+
 
 async function status(req, res) {
   try {
@@ -58,52 +73,17 @@ async function disconnect(req, res) {
       spotifyRefreshToken: null,
       spotifyTokenExpiry: null
     });
-    res.json({ message: 'Spotify disconnected successfully' });
+    res.json({ message: 'Successfully disconnected from Spotify' });
   } catch (error) {
     console.error('Spotify disconnect error:', error);
-    res.status(500).json({ error: 'Failed to disconnect Spotify' });
+    res.status(500).json({ error: 'Failed to disconnect from Spotify' });
   }
 }
 
-async function getAvailableGenreSeeds(req, res) {
-  try {
-    const user = await User.findById(req.user._id);
-
-    if (!user.spotifyAccessToken) {
-      return res.status(401).json({ error: 'No Spotify connection found' });
-    }
-
-    await refreshTokenIfNeeded(user, spotifyApi);
-
-    const genreSeeds = await spotifyApi.getAvailableGenreSeeds();
-    const selectedGenres = ["alternative", "ambient", "electronic", "emo", "hip-hop", "indie", "indie-pop", "k-pop", "pop", "rock", "synth-pop"];
-    const filteredGenres = genreSeeds.body.genres.filter(genre => selectedGenres.includes(genre));
-
-    res.json({ genres: filteredGenres });
-  } catch (error) {
-    console.error('Error fetching genre seeds:', error);
-    res.status(500).json({ error: 'Failed to fetch genre seeds', details: error.message });
-  }
-}
-
-async function refreshTokenIfNeeded(user, spotifyApi) {
-  if (user.spotifyTokenExpiry && new Date() > new Date(user.spotifyTokenExpiry)) {
-    try {
-      const data = await spotifyApi.refreshAccessToken();
-      const { access_token, expires_in } = data.body;
-
-      await User.findByIdAndUpdate(user._id, {
-        spotifyAccessToken: access_token,
-        spotifyTokenExpiry: new Date(Date.now() + expires_in * 1000)
-      });
-
-      spotifyApi.setAccessToken(access_token);
-    } catch (error) {
-      throw new Error('Failed to refresh Spotify access token. Please reconnect.');
-    }
-  } else {
-    spotifyApi.setAccessToken(user.spotifyAccessToken);
-  }
-}
-
-module.exports = { connect, callback, status, disconnect, getAvailableGenreSeeds };
+module.exports = {
+  connect,
+  callback,
+  status,
+  disconnect,
+  SCOPES
+};
