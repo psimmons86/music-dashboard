@@ -1,7 +1,14 @@
+
 const User = require('../models/user');
 const jwt = require('jsonwebtoken');
 
+console.log('Loading auth controller with SECRET:', process.env.SECRET);
+
 function createJWT(user) {
+  if (!process.env.SECRET) {
+    throw new Error('SECRET environment variable is not set');
+  }
+
   return jwt.sign(
     { user: { _id: user._id, name: user.name, email: user.email, role: user.role } },
     process.env.SECRET,
@@ -12,17 +19,24 @@ function createJWT(user) {
 const authController = {
   async signup(req, res) {
     try {
-      const { name, email, password } = req.body;
+      const { name, email, password, adminCode } = req.body;
 
       const existingUser = await User.findOne({ email });
       if (existingUser) {
         return res.status(400).json({ message: 'User already exists' });
       }
 
-      const user = new User({ name, email, password });
+      const isAdmin = adminCode === process.env.ADMIN_SECRET_CODE;
+
+      const user = new User({ 
+        name, 
+        email, 
+        password,
+        role: isAdmin ? 'admin' : 'user'
+      });
       await user.save();
 
-      const token = await createJWT(user);
+      const token = createJWT(user);
 
       const userResponse = user.toObject();
       delete userResponse.password;
@@ -51,7 +65,7 @@ const authController = {
         return res.status(401).json({ message: 'Invalid credentials' });
       }
 
-      const token = await createJWT(user);
+      const token = createJWT(user);
 
       const userResponse = user.toObject();
       delete userResponse.password;

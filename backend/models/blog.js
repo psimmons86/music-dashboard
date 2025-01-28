@@ -1,7 +1,8 @@
+
 const mongoose = require('mongoose');
 const Schema = mongoose.Schema;
 
-const blogPostSchema = new Schema({
+const blogSchema = new Schema({
   title: { 
     type: String, 
     required: true 
@@ -15,26 +16,14 @@ const blogPostSchema = new Schema({
     ref: 'User',
     required: true
   },
-  slug: {
-    type: String,
-    required: true,
-    unique: true
-  },
-  status: {
-    type: String,
-    enum: ['draft', 'published'],
-    default: 'draft'
-  },
   category: {
     type: String,
-    required: true
+    required: true,
+    enum: ['Music News', 'Artist Spotlight', 'Industry Trends', 'Reviews', 'Tutorials']
   },
   tags: [{
     type: String
   }],
-  featuredImage: {
-    type: String
-  },
   summary: {
     type: String,
     required: true
@@ -47,14 +36,4 @@ const blogPostSchema = new Schema({
   timestamps: true
 });
 
-blogPostSchema.pre('save', function(next) {
-  if (this.isModified('title')) {
-    this.slug = this.title
-      .toLowerCase()
-      .replace(/[^a-z0-9]+/g, '-')
-      .replace(/(^-|-$)/g, '');
-  }
-  next();
-});
-
-module.exports = mongoose.model('BlogPost', blogPostSchema);
+module.exports = mongoose.model('Blog', blogSchema);

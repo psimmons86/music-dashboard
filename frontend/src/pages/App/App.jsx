@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Routes, Route, useNavigate } from 'react-router';
 import { getUser, getToken } from '../../services/authService';
 import './App.css';
+
 import HomePage from '../HomePage/HomePage';
 import DashboardPage from '../DashboardPage/DashboardPage';
 import ProfilePage from '../ProfilePage/ProfilePage';

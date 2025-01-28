@@ -16,10 +16,6 @@ const userSchema = new mongoose.Schema({
     type: String,
     required: true
   },
-  spotifyId: {
-    type: String,
-    default: null
-  },
   spotifyAccessToken: {
     type: String,
     default: null
@@ -35,29 +31,9 @@ const userSchema = new mongoose.Schema({
   favoriteGenres: [{
     type: String
   }],
-  profileImage: {
-    type: String,
-    default: null
-  },
-  favorites: [{
-    type: mongoose.Schema.Types.ObjectId,
-    refPath: 'favoriteType'
-  }],
-  favoriteGenres: [{
-    type: String
-  }],
   favoriteMoods: [{
     type: String
-  }],
-  favoriteType: {
-    type: String,
-    enum: ['Article', 'Playlist', 'BlogPost']
-  },
-  role: {
-    type: String,
-    enum: ['user', 'admin'],
-    default: 'user'
-  }
+  }]
 }, {
   timestamps: true
 });
@@ -82,10 +58,10 @@ userSchema.methods.comparePassword = async function(candidatePassword) {
   }
 };
 
-
-userSchema.methods.updateSpotifyTokens = function(accessToken, refreshToken) {
+userSchema.methods.updateSpotifyTokens = function(accessToken, refreshToken, expiryDate) {
   this.spotifyAccessToken = accessToken;
   this.spotifyRefreshToken = refreshToken;
+  this.spotifyTokenExpiry = expiryDate;
   return this.save();
 };
 

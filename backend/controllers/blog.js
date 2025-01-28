@@ -1,140 +1,107 @@
-const BlogPost = require('../models/blog');
-
-
-const ensureAdmin = (req, res, next) => {
-  if (req.user && req.user.role === 'admin') {
-    next();
-  } else {
-    res.status(403).json({ error: 'Admin access required' });
-  }
-};
+const Blog = require('../models/blog');
 
 const blogController = {
-
+  // Create new blog post
   async create(req, res) {
     try {
-      const blogPost = new BlogPost({
+      const blog = new Blog({
         ...req.body,
         author: req.user._id
       });
-      await blogPost.save();
-      res.status(201).json(blogPost);
+      await blog.save();
+      res.status(201).json(blog);
     } catch (error) {
-      console.error('Create blog post error:', error);
+      console.error('Create blog error:', error);
       res.status(400).json({ error: error.message });
     }
   },
 
-
-  async update(req, res) {
+  // Get all blog posts
+  async getAll(req, res) {
     try {
-      const blogPost = await BlogPost.findById(req.params.id);
-      if (!blogPost) {
-        return res.status(404).json({ error: 'Blog post not found' });
-      }
-
-      Object.assign(blogPost, req.body);
-      await blogPost.save();
-      res.json(blogPost);
-    } catch (error) {
-      console.error('Update blog post error:', error);
-      res.status(400).json({ error: error.message });
-    }
-  },
-
-
-  async delete(req, res) {
-    try {
-      const blogPost = await BlogPost.findByIdAndDelete(req.params.id);
-      if (!blogPost) {
-        return res.status(404).json({ error: 'Blog post not found' });
-      }
-      res.json({ message: 'Blog post deleted successfully' });
-    } catch (error) {
-      console.error('Delete blog post error:', error);
-      res.status(400).json({ error: error.message });
-    }
-  },
-
-  async getAllForAdmin(req, res) {
-    try {
-      const blogPosts = await BlogPost.find()
+      const blogs = await Blog.find()
         .populate('author', 'name')
         .sort('-createdAt');
-      res.json(blogPosts);
+      res.json(blogs);
     } catch (error) {
-      console.error('Get admin blog posts error:', error);
+      console.error('Get blogs error:', error);
       res.status(400).json({ error: error.message });
     }
   },
 
-  async getPublished(req, res) {
-    try {
-      const blogPosts = await BlogPost.find({ status: 'published' })
-        .populate('author', 'name')
-        .sort('-createdAt');
-      res.json(blogPosts);
-    } catch (error) {
-      console.error('Get published blog posts error:', error);
-      res.status(400).json({ error: error.message });
-    }
-  },
-
+  // Get single blog post
   async getOne(req, res) {
     try {
-      const blogPost = await BlogPost.findOne({ slug: req.params.slug })
+      const blog = await Blog.findById(req.params.id)
         .populate('author', 'name');
       
-      if (!blogPost) {
+      if (!blog) {
         return res.status(404).json({ error: 'Blog post not found' });
       }
 
-      blogPost.viewCount += 1;
-      await blogPost.save();
+      // Increment view count
+      blog.viewCount += 1;
+      await blog.save();
 
-      res.json(blogPost);
+      res.json(blog);
     } catch (error) {
-      console.error('Get blog post error:', error);
+      console.error('Get blog error:', error);
       res.status(400).json({ error: error.message });
     }
   },
 
-  async getAnalytics(req, res) {
+  // Update blog post (only author can update)
+  async update(req, res) {
     try {
-      const analytics = await BlogPost.aggregate([
-        {
-          $group: {
-            _id: null,
-            totalPosts: { $sum: 1 },
-            totalViews: { $sum: '$viewCount' },
-            averageViews: { $avg: '$viewCount' },
-            publishedPosts: {
-              $sum: { $cond: [{ $eq: ['$status', 'published'] }, 1, 0] }
-            },
-            draftPosts: {
-              $sum: { $cond: [{ $eq: ['$status', 'draft'] }, 1, 0] }
-            }
-          }
-        }
-      ]);
-
-      const topPosts = await BlogPost.find()
-        .sort('-viewCount')
-        .limit(5)
-        .select('title viewCount slug');
-
-      res.json({
-        summary: analytics[0],
-        topPosts
+      const blog = await Blog.findOne({
+        _id: req.params.id,
+        author: req.user._id
       });
+
+      if (!blog) {
+        return res.status(404).json({ error: 'Blog post not found or unauthorized' });
+      }
+
+      Object.assign(blog, req.body);
+      await blog.save();
+      res.json(blog);
     } catch (error) {
-      console.error('Get blog analytics error:', error);
+      console.error('Update blog error:', error);
+      res.status(400).json({ error: error.message });
+    }
+  },
+
+  // Delete blog post (only author can delete)
+  async delete(req, res) {
+    try {
+      const blog = await Blog.findOneAndDelete({
+        _id: req.params.id,
+        author: req.user._id
+      });
+
+      if (!blog) {
+        return res.status(404).json({ error: 'Blog post not found or unauthorized' });
+      }
+
+      res.json({ message: 'Blog post deleted successfully' });
+    } catch (error) {
+      console.error('Delete blog error:', error);
+      res.status(400).json({ error: error.message });
+    }
+  },
+
+  // Get user's blog posts
+  async getUserBlogs(req, res) {
+    try {
+      const blogs = await Blog.find({ author: req.user._id })
+        .populate('author', 'name')
+        .sort('-createdAt');
+      res.json(blogs);
+    } catch (error) {
+      console.error('Get user blogs error:', error);
       res.status(400).json({ error: error.message });
     }
   }
 };
 
-module.exports = {
-  blogController,
-  ensureAdmin
-};
+module.exports = blogController;
