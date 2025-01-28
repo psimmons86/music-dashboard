@@ -26,7 +26,9 @@ app.use('/api/articles', require('./routes/articles'));
 app.use('/api/news', require('./routes/news'));
 app.use('/api/user', require('./routes/user'));
 app.use('/api/posts', require('./routes/posts'));
+app.use('/api/blog', require('./routes/blog'));
 app.use('/api/playlist', require('./routes/playlist'));
+
 
 // Catch-all route
 app.get('*', function (req, res) {
