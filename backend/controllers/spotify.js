@@ -1,14 +1,14 @@
 const SpotifyWebApi = require('spotify-web-api-node');
 const User = require('../models/user');
 
-const SCOPES = [
+const REQUIRED_SCOPES = [
   'user-read-private',
-  'playlist-modify-public',
+  'user-read-email',
   'playlist-modify-private',
+  'playlist-modify-public',
+  'user-read-recently-played',
   'user-top-read',
-  'playlist-read-private',
-  'playlist-read-collaborative',
-  'user-read-email'
+  'user-read-currently-playing'
 ];
 
 const spotifyApi = new SpotifyWebApi({
@@ -20,7 +20,7 @@ const spotifyApi = new SpotifyWebApi({
 async function connect(req, res) {
   try {
     const state = Math.random().toString(36).substring(7);
-    const authorizeURL = spotifyApi.createAuthorizeURL(SCOPES, state);
+    const authorizeURL = spotifyApi.createAuthorizeURL(REQUIRED_SCOPES, state);
     res.json({ url: authorizeURL });
   } catch (error) {
     console.error('Spotify connect error:', error);

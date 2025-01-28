@@ -3,16 +3,6 @@ const router = express.Router();
 const SpotifyWebApi = require('spotify-web-api-node');
 const User = require('../models/user');
 
-const SCOPES = [
-  'user-read-private',
-  'playlist-modify-public',
-  'playlist-modify-private',
-  'user-top-read',
-  'playlist-read-private',
-  'playlist-read-collaborative',
-  'user-read-email'
-];
-
 // Initialize Spotify API
 const spotifyApi = new SpotifyWebApi({
   clientId: process.env.SPOTIFY_CLIENT_ID,
@@ -20,11 +10,22 @@ const spotifyApi = new SpotifyWebApi({
   redirectUri: process.env.SPOTIFY_REDIRECT_URI
 });
 
+// Define all required scopes
+const REQUIRED_SCOPES = [
+  'user-read-private',
+  'user-read-email',
+  'playlist-modify-private',
+  'playlist-modify-public',
+  'user-read-recently-played',
+  'user-top-read',
+  'user-read-currently-playing'
+];
+
 // Connect to Spotify
 router.get('/connect', async (req, res) => {
   try {
     const state = Math.random().toString(36).substring(7);
-    const authorizeURL = spotifyApi.createAuthorizeURL(SCOPES, state);
+    const authorizeURL = spotifyApi.createAuthorizeURL(REQUIRED_SCOPES, state);
     res.json({ url: authorizeURL });
   } catch (error) {
     console.error('Spotify connect error:', error);
