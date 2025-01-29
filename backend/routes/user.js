@@ -3,9 +3,9 @@ const router = express.Router();
 const User = require('../models/user');
 const ensureLoggedIn = require('../middleware/ensureLoggedIn');
 const multer = require('multer');
+const fs = require('fs');
 const path = require('path');
 
-// Configure multer for file upload
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
     cb(null, path.join(__dirname, '../uploads/profilePictures'));
@@ -16,7 +16,7 @@ const storage = multer.diskStorage({
 });
 const upload = multer({ 
   storage: storage,
-  limits: { fileSize: 5 * 1024 * 1024 }, // 5MB file size limit
+  limits: { fileSize: 5 * 1024 * 1024 },
   fileFilter: function (req, file, cb) {
     const filetypes = /jpeg|jpg|png|gif/;
     const mimetype = filetypes.test(file.mimetype);
@@ -29,7 +29,7 @@ const upload = multer({
   }
 });
 
-// GET /api/user/profile
+
 router.get('/profile', ensureLoggedIn, async (req, res) => {
   try {
     const user = await User.findById(req.user._id).select('-password');
@@ -40,7 +40,6 @@ router.get('/profile', ensureLoggedIn, async (req, res) => {
   }
 });
 
-// POST /api/user/profile
 router.post('/profile', ensureLoggedIn, async (req, res) => {
   try {
     const { name, bio, location, socialLinks } = req.body;
@@ -65,7 +64,6 @@ router.post('/profile', ensureLoggedIn, async (req, res) => {
   }
 });
 
-// POST /api/user/profile-picture
 router.post('/profile-picture', 
   ensureLoggedIn, 
   upload.single('profilePicture'), 
@@ -75,11 +73,15 @@ router.post('/profile-picture',
         return res.status(400).json({ error: 'No file uploaded' });
       }
 
+      const profilePicturePath = `/uploads/profilePictures/${req.file.filename}`;
+
       const user = await User.findByIdAndUpdate(
         req.user._id,
-        { profilePicture: `/uploads/profilePictures/${req.file.filename}` },
+        { profilePicture: profilePicturePath },
         { new: true }
       ).select('-password');
+
+      console.log('Updated user:', user);
 
       res.json(user);
     } catch (error) {
@@ -89,7 +91,6 @@ router.post('/profile-picture',
   }
 );
 
-// GET /api/user/favorites
 router.get('/favorites', ensureLoggedIn, async (req, res) => {
   try {
     const user = await User.findById(req.user._id).select('favoriteGenres favoriteMoods');
@@ -100,7 +101,6 @@ router.get('/favorites', ensureLoggedIn, async (req, res) => {
   }
 });
 
-// POST /api/user/favorites
 router.post('/favorites', ensureLoggedIn, async (req, res) => {
   try {
     const { favoriteGenres, favoriteMoods } = req.body;

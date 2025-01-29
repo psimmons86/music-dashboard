@@ -26,11 +26,11 @@ export default function NewsFeed() {
 
   return (
     <div className="space-y-6">
-      <div className="sticky top-0 bg-white/95 backdrop-blur-sm z-10 p-4 rounded-lg shadow-sm">
+      <div className="sticky top-0 bg-white z-10 pb-4">
         <select 
           value={genre} 
           onChange={(e) => setGenre(e.target.value)}
-          className="w-full px-4 py-2 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-purple-500 transition-shadow cursor-pointer"
+          className="w-full px-4 py-2 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-purple-500"
         >
           <option value="">All Genres</option>
           {genres.map(g => (
@@ -44,9 +44,9 @@ export default function NewsFeed() {
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600"></div>
         </div>
       ) : (
-        <div className="grid gap-6 grid-cols-1 md:grid-cols-2">
+        <div className="grid gap-6 grid-cols-1">
           {news.length === 0 ? (
-            <p className="text-gray-500 text-center col-span-full py-8">
+            <p className="text-gray-500 text-center py-8">
               No articles found. Try a different genre.
             </p>
           ) : (

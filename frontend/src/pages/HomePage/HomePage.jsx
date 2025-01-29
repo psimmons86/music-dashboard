@@ -5,8 +5,7 @@ import PlaylistGenerator from '../../components/PlaylistGenerator/PlaylistGenera
 import './HomePage.css';
 
 export default function HomePage() {
-  const [activeSection, setActiveSection] = useState('news'); // 'news', 'playlists', 'demo'
-
+  const [activeSection, setActiveSection] = useState('news'); 
   return (
     <div className="landing-page">
       <div className="hero-section">
@@ -15,7 +14,6 @@ export default function HomePage() {
       </div>
 
       <div className="preview-sections">
-        {/* News Preview Section */}
         <section className="preview-box">
           <h2>Music News</h2>
           <div className="preview-content">
@@ -26,7 +24,6 @@ export default function HomePage() {
           </Link>
         </section>
 
-        {/* Playlist Preview Section */}
         <section className="preview-box">
           <h2>Playlist Generator</h2>
           <div className="preview-content">
@@ -44,7 +41,6 @@ export default function HomePage() {
           </Link>
         </section>
 
-        {/* How It Works Section */}
         <section className="preview-box">
           <h2>How It Works</h2>
           <div className="preview-content">

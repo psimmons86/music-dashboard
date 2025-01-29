@@ -47,10 +47,11 @@ async function createPlaylist(req, res) {
       id: playlist.body.id,
       name: playlist.body.name,
       url: playlist.body.external_urls.spotify,
+      embedUrl: `https://open.spotify.com/embed/playlist/${playlist.body.id}`,
       trackCount: trackUris.length
     });
 
-  } catch (error) {
+  } catch (error) { 
     console.error('Playlist creation error:', error);
     if (error.statusCode === 401) {
       await User.findByIdAndUpdate(req.user._id, {
