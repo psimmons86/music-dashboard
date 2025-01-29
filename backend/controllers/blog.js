@@ -1,14 +1,28 @@
-
 const Blog = require('../models/blog');
 
 const blogController = {
-
   async create(req, res) {
     try {
       const blog = new Blog({
         ...req.body,
         author: req.user._id
       });
+
+      if (req.body.isDraft && req.body.previousDraftId) {
+        const previousDraft = await Blog.findOne({
+          _id: req.body.previousDraftId,
+          author: req.user._id
+        });
+        
+        if (previousDraft) {
+          previousDraft.revisions.push({
+            content: previousDraft.content,
+            updatedAt: new Date()
+          });
+          await previousDraft.remove();
+        }
+      }
+
       await blog.save();
       res.status(201).json(blog);
     } catch (error) {
@@ -17,10 +31,10 @@ const blogController = {
     }
   },
 
-
   async getAll(req, res) {
     try {
-      const blogs = await Blog.find()
+      const filter = { status: 'published' };
+      const blogs = await Blog.find(filter)
         .populate('author', 'name')
         .sort('-createdAt');
       res.json(blogs);
@@ -30,6 +44,20 @@ const blogController = {
     }
   },
 
+  async getUserBlogs(req, res) {
+    try {
+      const blogs = await Blog.find({ 
+        author: req.user._id,
+        $or: [{ status: 'published' }, { status: 'draft' }]
+      })
+        .populate('author', 'name')
+        .sort('-createdAt');
+      res.json(blogs);
+    } catch (error) {
+      console.error('Get user blogs error:', error);
+      res.status(400).json({ error: error.message });
+    }
+  },
 
   async getOne(req, res) {
     try {
@@ -40,9 +68,10 @@ const blogController = {
         return res.status(404).json({ error: 'Blog post not found' });
       }
 
-
-      blog.viewCount += 1;
-      await blog.save();
+      if (blog.status === 'published') {
+        blog.viewCount += 1;
+        await blog.save();
+      }
 
       res.json(blog);
     } catch (error) {
@@ -50,7 +79,6 @@ const blogController = {
       res.status(400).json({ error: error.message });
     }
   },
-
 
   async update(req, res) {
     try {
@@ -62,6 +90,11 @@ const blogController = {
       if (!blog) {
         return res.status(404).json({ error: 'Blog post not found or unauthorized' });
       }
+
+      blog.revisions.push({
+        content: blog.content,
+        updatedAt: new Date()
+      });
 
       Object.assign(blog, req.body);
       await blog.save();
@@ -86,19 +119,6 @@ const blogController = {
       res.json({ message: 'Blog post deleted successfully' });
     } catch (error) {
       console.error('Delete blog error:', error);
-      res.status(400).json({ error: error.message });
-    }
-  },
-
-
-  async getUserBlogs(req, res) {
-    try {
-      const blogs = await Blog.find({ author: req.user._id })
-        .populate('author', 'name')
-        .sort('-createdAt');
-      res.json(blogs);
-    } catch (error) {
-      console.error('Get user blogs error:', error);
       res.status(400).json({ error: error.message });
     }
   }

@@ -1,4 +1,3 @@
-
 const mongoose = require('mongoose');
 const Schema = mongoose.Schema;
 
@@ -28,10 +27,19 @@ const blogSchema = new Schema({
     type: String,
     required: true
   },
+  status: {
+    type: String,
+    enum: ['draft', 'published'],
+    default: 'draft'
+  },
   viewCount: {
     type: Number,
     default: 0
-  }
+  },
+  revisions: [{
+    content: String,
+    updatedAt: Date
+  }]
 }, {
   timestamps: true
 });

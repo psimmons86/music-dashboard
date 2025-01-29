@@ -2,7 +2,9 @@ import { useState, useEffect } from 'react';
 import { Routes, Route, useNavigate } from 'react-router';
 import { getUser, getToken } from '../../services/authService';
 import './App.css';
-
+import BlogListPage from '../BlogListPage/BlogListPage';
+import BlogDetailPage from '../BlogDetailPage/BlogDetailPage';
+import BlogCreatePage from '../BlogCreatePage/BlogCreatePage';
 import HomePage from '../HomePage/HomePage';
 import DashboardPage from '../DashboardPage/DashboardPage';
 import ProfilePage from '../ProfilePage/ProfilePage';
@@ -74,6 +76,9 @@ export default function App() {
             <Route path="/" element={<HomePage />} />
             <Route path="/dashboard" element={<DashboardPage />} />
             <Route path="/profile" element={<ProfilePage user={user} />} />
+            <Route path="/blog" element={<BlogListPage />} />
+            <Route path="/blog/create" element={<BlogCreatePage />} />
+            <Route path="/blog/:id" element={<BlogDetailPage />} />
             <Route path="/auth/spotify/callback" element={<SpotifyCallback />} />
           </Routes>
         ) : (

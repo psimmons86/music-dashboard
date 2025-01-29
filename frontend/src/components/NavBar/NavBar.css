@@ -1,30 +1,25 @@
+/* src/components/NavBar/NavBar.css */
+
 .NavBar {
-  display: flex;
-  justify-content: space-around;
-  align-items: center;
-  padding: 2vmin;
-  font-size: 2vmin;
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  background-color: white;
+  border-bottom: 1px solid rgba(229, 231, 235, 1);
 }
 
-.NavBar {
-  a {
-    border-radius: 0.8vmin;
-    padding: 0.5vmin 1.5vmin;
-    text-decoration: none;
-    color: #1a1a1a;
-  }
+/* Add smooth hover transitions */
+.NavBar a {
+  transition: all 0.2s ease-in-out;
+}
 
-  a:hover {
-    background-color: #1a1a1a;
-    color: whitesmoke;
-  }
+/* Ensure active state is visible even when hovering */
+.NavBar a.active:hover {
+  background-color: #98e4d3;
+}
 
-  a.active {
-    background-color: rebeccapurple;
-    color: whitesmoke;
-  }
-
-  span {
-    color: rgb(108, 9, 87);
-  }
+/* Add a subtle shadow effect on hover for buttons */
+.NavBar button:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
 }

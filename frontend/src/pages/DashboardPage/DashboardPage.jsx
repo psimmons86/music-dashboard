@@ -65,14 +65,14 @@ export default function DashboardPage() {
   return (
     <div className="min-h-screen bg-[#98e4d3] p-6">
       <nav className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold">Dashboard</h1>
-        <Link 
-          to="/blog/create"
-          className="bg-[#d4e7aa] text-gray-800 px-4 py-2 rounded-lg hover:bg-[#c3d69b] transition-colors"
-        >
-          Create Blog
-        </Link>
-      </nav>
+  <h1 className="text-2xl font-bold">Dashboard</h1>
+  <Link 
+    to="/blog/create"
+    className="bg-[#d4e7aa] text-gray-800 px-4 py-2 rounded-lg hover:bg-[#c3d69b] transition-colors"
+  >
+    Create Blog
+  </Link>
+</nav>
       
       <div className="grid grid-cols-12 gap-6 max-w-screen-2xl mx-auto">
 
