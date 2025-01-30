@@ -42,6 +42,16 @@ export async function getTopArtists() {
   }
 }
 
+export async function handleSpotifyCallback(code) {
+  try {
+    const response = await sendRequest(`${BASE_URL}/callback`, 'POST', { code });
+    return response;
+  } catch (error) {
+    console.error('Error handling Spotify callback:', error);
+    throw new Error('Failed to complete Spotify connection');
+  }
+}
+
 export async function getRecommendations(genre, mood) {
   try {
     const params = new URLSearchParams({
@@ -63,12 +73,35 @@ export async function getRecommendations(genre, mood) {
   }
 }
 
-export async function handleSpotifyCallback(code) {
+export async function getRecentAlbums() {
   try {
-    const response = await sendRequest(`${BASE_URL}/callback`, 'POST', { code });
+    const response = await sendRequest(`${BASE_URL}/recent-albums`);
+    if (!Array.isArray(response)) {
+      throw new Error('Invalid albums response');
+    }
     return response;
   } catch (error) {
-    console.error('Error handling Spotify callback:', error);
-    throw new Error('Failed to complete Spotify connection');
+    console.error('Error fetching recent albums:', error);
+    if (error.status === 401) {
+      throw new Error('Please reconnect your Spotify account');
+    }
+    throw new Error(error.message || 'Failed to get recent albums');
   }
 }
+
+export async function getUserPlaylists() {
+  try {
+    const response = await sendRequest(`${BASE_URL}/playlists`);
+    if (!Array.isArray(response)) {
+      throw new Error('Invalid playlists response');
+    }
+    return response;
+  } catch (error) {
+    console.error('Error fetching playlists:', error);
+    if (error.status === 401) {
+      throw new Error('Please reconnect your Spotify account');
+    }
+    throw new Error(error.message || 'Failed to get playlists');
+  }
+}
+

@@ -16,7 +16,10 @@ const REQUIRED_SCOPES = [
   'playlist-modify-public',
   'user-read-recently-played',
   'user-top-read',
-  'user-read-currently-playing'
+  'user-read-currently-playing',
+  'user-library-read',
+  'playlist-read-private',
+  'playlist-read-collaborative'
 ];
 
 async function connect(req, res) {
@@ -132,6 +135,38 @@ async function getRecommendations(req, res) {
   }
 }
 
+async function getRecentAlbums(req, res) {
+  try {
+    const user = await User.findById(req.user._id);
+    if (!user?.spotifyAccessToken) {
+      return res.status(401).json({ error: 'No Spotify connection found' });
+    }
+
+    spotifyApi.setAccessToken(user.spotifyAccessToken);
+    const response = await spotifyApi.getMySavedAlbums({ limit: 8 });
+    
+    res.json(response.body.items);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+}
+
+async function getUserPlaylists(req, res) {
+  try {
+    const user = await User.findById(req.user._id);
+    if (!user?.spotifyAccessToken) {
+      return res.status(401).json({ error: 'No Spotify connection found' });
+    }
+
+    spotifyApi.setAccessToken(user.spotifyAccessToken);
+    const response = await spotifyApi.getUserPlaylists(user.spotifyId, { limit: 6 });
+    
+    res.json(response.body.items);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+}
+
 module.exports = {
   connect,
   callback,
@@ -139,5 +174,7 @@ module.exports = {
   disconnect,
   getTopArtists,
   getRecommendations,
+  getRecentAlbums,
+  getUserPlaylists,
   REQUIRED_SCOPES
 };

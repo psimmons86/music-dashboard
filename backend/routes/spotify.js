@@ -13,5 +13,7 @@ router.get('/status', spotifyCtrl.status);
 router.post('/disconnect', spotifyCtrl.disconnect);
 router.get('/top-artists', spotifyCtrl.getTopArtists);
 router.get('/recommendations', spotifyCtrl.getRecommendations);
+router.get('/recent-albums', spotifyCtrl.getRecentAlbums);
+router.get('/playlists', spotifyCtrl.getUserPlaylists);
 
 module.exports = router;

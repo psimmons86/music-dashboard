@@ -5,34 +5,38 @@ const cors = require('cors');
 const app = express();
 
 require('dotenv').config();
+
 require('./db');
 
-// Basic middleware
 app.use(logger('dev'));
 app.use(cors()); 
 app.use(express.json());
+
 app.use(express.static(path.join(__dirname, '../frontend/dist')));
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
-// Public Routes - NO auth required
 app.use('/api/auth', require('./routes/auth'));
+app.use('/api/news', require('./routes/news'));
 
-// All routes after this require authentication
-app.use(require('./middleware/checkToken'));
-app.use(require('./middleware/ensureLoggedIn'));
-
-// Protected Routes
+app.use('/api', require('./middleware/checkToken'));
+app.use('/api', require('./middleware/ensureLoggedIn'));
 app.use('/api/spotify', require('./routes/spotify'));
 app.use('/api/articles', require('./routes/articles'));
-app.use('/api/news', require('./routes/news'));
 app.use('/api/user', require('./routes/user'));
 app.use('/api/posts', require('./routes/posts'));
 app.use('/api/playlist', require('./routes/playlist'));
 app.use('/api/blog', require('./routes/blog'));
 
-// Catch-all route for SPA
 app.get('*', function(req, res) {
   res.sendFile(path.join(__dirname, '../frontend/dist/index.html'));
+});
+
+app.use((err, req, res, next) => {
+  console.error(err.stack);
+  res.status(500).json({ 
+    error: 'Something went wrong!',
+    message: err.message 
+  });
 });
 
 const port = process.env.PORT || 3000;

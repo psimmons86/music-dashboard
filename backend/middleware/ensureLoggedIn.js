@@ -1,4 +1,14 @@
-module.exports = function (req, res, next) {
-  if (req.user) return next();
-  res.status(401).json({ message: 'Unauthorized' });
+module.exports = function(req, res, next) {
+  const publicRoutes = ['/api/auth', '/api/news'];
+  if (publicRoutes.some(route => req.path.startsWith(route))) {
+    return next();
+  }
+  if (!req.user) {
+    return res.status(401).json({ 
+      error: 'Unauthorized',
+      message: 'You must be logged in to access this resource'
+    });
+  }
+  
+  next();
 };
