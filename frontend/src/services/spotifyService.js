@@ -5,10 +5,23 @@ const BASE_URL = '/api/spotify';
 export async function connectSpotify() {
   try {
     const response = await sendRequest(`${BASE_URL}/connect`);
+    
+    if (!response?.url) {
+      throw new Error('No authorization URL received from server');
+    }
+
+    console.log('Received Spotify URL:', response.url);
+    
+    try {
+      new URL(response.url);
+    } catch (e) {
+      throw new Error('Invalid authorization URL received');
+    }
+
     return response;
   } catch (error) {
     console.error('Error connecting to Spotify:', error);
-    throw new Error('Failed to connect to Spotify');
+    throw new Error(error.message || 'Failed to connect to Spotify');
   }
 }
 

@@ -2,6 +2,8 @@ import sendRequest from './sendRequest';
 
 const BASE_URL = '/api/auth';
 
+
+
 export async function signUp(userData) {
   const response = await sendRequest(`${BASE_URL}/signup`, 'POST', userData);
   localStorage.setItem('token', response.token);
@@ -43,3 +45,4 @@ export async function updateUserRole(userId, role, secretKey) {
     secretKey
   });
 }
+

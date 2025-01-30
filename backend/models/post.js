@@ -15,8 +15,15 @@ const postSchema = new Schema({
     required: true,
     ref: 'User'
   },
+  likes: [{
+    type: Schema.Types.ObjectId,
+    ref: 'User'
+  }]
+}, {
+  timestamps: true
 }, {
   timestamps: true
 });
+
 
 module.exports = mongoose.model('Post', postSchema);

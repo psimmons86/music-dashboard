@@ -13,3 +13,7 @@ export async function create(postData) {
 export async function deletePost(id) {
   return sendRequest(`${BASE_URL}/${id}`, 'DELETE');
 }
+
+export async function likePost(postId) {
+  return sendRequest(`${BASE_URL}/${postId}/like`, 'POST');
+}

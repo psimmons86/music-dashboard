@@ -16,49 +16,29 @@ const userSchema = new mongoose.Schema({
     type: String,
     required: true
   },
+  role: {
+    type: String,
+    enum: ['user', 'admin'],
+    default: 'user'
+  },
+  // Spotify related fields
+  spotifyAccessToken: String,
+  spotifyRefreshToken: String,
+  spotifyTokenExpiry: Date,
+  spotifyId: String,
+  
+  // Other user fields
   profilePicture: {
     type: String,
     default: '/default-profile.png'
   },
-  bio: {
-    type: String,
-    default: ''
-  },
-  socialLinks: {
-    discogs: {
-      type: String,
-      default: ''
-    },
-    vinylVault: {
-      type: String,
-      default: ''
-    },
-    lastFm: {
-      type: String,
-      default: ''
-    }
-  },
-  location: {
-    type: String,
-    default: ''
-  },
-  spotifyAccessToken: {
-    type: String,
-    default: null
-  },
-  spotifyRefreshToken: {
-    type: String,
-    default: null
-  },
-  spotifyTokenExpiry: {
-    type: Date,
-    default: null
-  },
   favoriteGenres: [{
-    type: String
+    type: String,
+    enum: ['Rock', 'Hip Hop', 'Electronic', 'Pop', 'Jazz', 'Classical', 'R&B', 'Country', 'Metal', 'Folk', 'Blues']
   }],
   favoriteMoods: [{
-    type: String
+    type: String,
+    enum: ['Happy', 'Chill', 'Energetic', 'Sad', 'Focused']
   }]
 }, {
   timestamps: true
@@ -66,31 +46,12 @@ const userSchema = new mongoose.Schema({
 
 userSchema.pre('save', async function(next) {
   if (!this.isModified('password')) return next();
-  
-  try {
-    const salt = await bcrypt.genSalt(10);
-    this.password = await bcrypt.hash(this.password, salt);
-    next();
-  } catch (error) {
-    next(error);
-  }
+  this.password = await bcrypt.hash(this.password, 10);
+  next();
 });
 
-userSchema.methods.comparePassword = async function(candidatePassword) {
-  try {
-    return await bcrypt.compare(candidatePassword, this.password);
-  } catch (error) {
-    throw error;
-  }
+userSchema.methods.comparePassword = async function(tryPassword) {
+  return bcrypt.compare(tryPassword, this.password);
 };
 
-userSchema.methods.updateSpotifyTokens = function(accessToken, refreshToken, expiryDate) {
-  this.spotifyAccessToken = accessToken;
-  this.spotifyRefreshToken = refreshToken;
-  this.spotifyTokenExpiry = expiryDate;
-  return this.save();
-};
-
-const User = mongoose.model('User', userSchema);
-
-module.exports = User;
+module.exports = mongoose.model('User', userSchema);

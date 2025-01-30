@@ -8,9 +8,30 @@ import PlaylistCard from '../../components/PlaylistCard/PlaylistCard';
 import SpotifyConnect from '../../components/SpotifyConnect/SpotifyConnect';
 import PostForm from '../../components/PostForm/PostForm';
 import { Music, Disc, Users, Trash2 } from 'lucide-react';
+import { AiOutlineHeart, AiFillHeart } from 'react-icons/ai';
+import { getUser } from '../../services/authService';
 
 function PostItem({ post, onDelete }) {
-  const currentUser = JSON.parse(localStorage.getItem('user'));
+  const currentUser = getUser();
+  const [isLiked, setIsLiked] = useState(post.likes?.includes(currentUser?._id));
+  const [likeCount, setLikeCount] = useState(post.likes?.length || 0);
+
+  console.log('Current User:', currentUser);
+  console.log('Post User:', post.user);
+  console.log('Current User ID:', currentUser?._id);
+  console.log('Post User ID:', post.user._id);
+  console.log('Do IDs match?:', currentUser?._id === post.user._id);
+
+  const handleLike = async () => {
+    if (!currentUser) return;
+    try {
+      const response = await postService.likePost(post._id);
+      setIsLiked(response.isLiked);
+      setLikeCount(response.likeCount);
+    } catch (err) {
+      console.error('Error liking post:', err);
+    }
+  };
 
   if (!post || !post.user) {
     return null;
@@ -34,16 +55,31 @@ function PostItem({ post, onDelete }) {
             </time>
           </div>
         </div>
-        {currentUser && currentUser._id === post.user._id && (
+        <div className="flex items-center gap-2">
           <button
-            onClick={() => onDelete(post._id)}
-            className="text-gray-400 hover:text-red-500 transition-colors p-1 rounded-full hover:bg-red-50"
-            title="Delete post"
+            onClick={handleLike}
+            className={`flex items-center gap-1 px-2 py-1 rounded-full transition-colors ${
+              isLiked 
+                ? 'text-red-500 bg-red-50' 
+                : 'text-gray-500 hover:bg-gray-50'
+            }`}
           >
-            <Trash2 size={16} />
+            {isLiked ? <AiFillHeart size={16} /> : <AiOutlineHeart size={16} />}
+            <span className="text-xs">{likeCount}</span>
           </button>
-        )}
+
+          {currentUser && String(currentUser._id) === String(post.user._id) && (
+            <button
+              onClick={() => onDelete(post._id)}
+              className="text-gray-400 hover:text-red-500 transition-colors p-1 rounded-full hover:bg-red-50"
+              title="Delete post"
+            >
+              <Trash2 size={16} />
+            </button>
+          )}
+        </div>
       </div>
+      
       <p className="text-gray-700 text-sm leading-relaxed">
         {post.content}
       </p>
@@ -208,7 +244,7 @@ export default function DashboardPage() {
   const handleDeletePost = async (postId) => {
     try {
       await postService.deletePost(postId);
-      setPosts(posts.filter(post => post._id !== postId));
+      setPosts(current => current.filter(post => post._id !== postId));
     } catch (err) {
       console.error('Error deleting post:', err);
       setError('Failed to delete post');
