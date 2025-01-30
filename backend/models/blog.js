@@ -4,7 +4,8 @@ const Schema = mongoose.Schema;
 const blogSchema = new Schema({
   title: { 
     type: String, 
-    required: true 
+    required: true,
+    trim: true
   },
   content: { 
     type: String, 
@@ -21,16 +22,21 @@ const blogSchema = new Schema({
     enum: ['Music News', 'Artist Spotlight', 'Industry Trends', 'Reviews', 'Tutorials']
   },
   tags: [{
-    type: String
+    type: String,
+    trim: true
   }],
   summary: {
     type: String,
-    required: true
+    required: true,
+    trim: true
   },
   status: {
     type: String,
     enum: ['draft', 'published'],
     default: 'draft'
+  },
+  image: {
+    type: String
   },
   viewCount: {
     type: Number,

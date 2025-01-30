@@ -1,116 +1,108 @@
-import { useEditor, EditorContent } from '@tiptap/react'
-import StarterKit from '@tiptap/starter-kit'
-import Image from '@tiptap/extension-image'
-import Link from '@tiptap/extension-link'
-import Placeholder from '@tiptap/extension-placeholder'
+import { useEditor, EditorContent } from '@tiptap/react';
+import StarterKit from '@tiptap/starter-kit';
+import Image from '@tiptap/extension-image';
+import Link from '@tiptap/extension-link';
+import Placeholder from '@tiptap/extension-placeholder';
+import { 
+  Bold, Italic, Strikethrough, Heading1, Heading2, 
+  List, ListOrdered, Quote, Link as LinkIcon, Image as ImageIcon,
+  Undo, Redo
+} from 'lucide-react';
 
-const MenuBar = ({ editor }) => {
-  if (!editor) {
-    return null
-  }
-
-  const addImage = () => {
-    const url = window.prompt('Enter the image URL')
-    if (url) {
-      editor.chain().focus().setImage({ src: url }).run()
-    }
-  }
+function MenuBar({ editor }) {
+  if (!editor) return null;
 
   const setLink = () => {
-    const url = window.prompt('Enter the URL')
+    const url = window.prompt('Enter the URL');
     if (url) {
-      editor.chain().focus().setLink({ href: url }).run()
+      editor.chain().focus().setLink({ href: url }).run();
     }
+  };
+
+  function MenuButton({ onClick, isActive, disabled, icon: Icon, title }) {
+    return (
+      <button
+        onClick={onClick}
+        disabled={disabled}
+        className={`
+          p-2 rounded transition-colors
+          ${isActive ? 'bg-emerald-100 text-emerald-800' : 'hover:bg-gray-100'}
+          ${disabled ? 'opacity-50 cursor-not-allowed' : ''}
+        `}
+        title={title}
+      >
+        <Icon size={18} />
+      </button>
+    );
   }
 
   return (
-    <div className="border-b border-gray-200 p-4 flex flex-wrap gap-2">
-      <button
+    <div className="border-b border-gray-200 p-2 flex flex-wrap gap-1">
+      <MenuButton
         onClick={() => editor.chain().focus().toggleBold().run()}
-        disabled={!editor.can().chain().focus().toggleBold().run()}
-        className={`p-2 rounded ${
-          editor.isActive('bold') ? 'bg-purple-100' : 'hover:bg-gray-100'
-        }`}
-      >
-        Bold
-      </button>
-      <button
+        isActive={editor.isActive('bold')}
+        icon={Bold}
+        title="Bold"
+      />
+      <MenuButton
         onClick={() => editor.chain().focus().toggleItalic().run()}
-        disabled={!editor.can().chain().focus().toggleItalic().run()}
-        className={`p-2 rounded ${
-          editor.isActive('italic') ? 'bg-purple-100' : 'hover:bg-gray-100'
-        }`}
-      >
-        Italic
-      </button>
-      <button
+        isActive={editor.isActive('italic')}
+        icon={Italic}
+        title="Italic"
+      />
+      <MenuButton
         onClick={() => editor.chain().focus().toggleStrike().run()}
-        disabled={!editor.can().chain().focus().toggleStrike().run()}
-        className={`p-2 rounded ${
-          editor.isActive('strike') ? 'bg-purple-100' : 'hover:bg-gray-100'
-        }`}
-      >
-        Strike
-      </button>
-      <button
+        isActive={editor.isActive('strike')}
+        icon={Strikethrough}
+        title="Strike"
+      />
+      <MenuButton
         onClick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()}
-        className={`p-2 rounded ${
-          editor.isActive('heading', { level: 1 }) ? 'bg-purple-100' : 'hover:bg-gray-100'
-        }`}
-      >
-        H1
-      </button>
-      <button
+        isActive={editor.isActive('heading', { level: 1 })}
+        icon={Heading1}
+        title="Heading 1"
+      />
+      <MenuButton
         onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}
-        className={`p-2 rounded ${
-          editor.isActive('heading', { level: 2 }) ? 'bg-purple-100' : 'hover:bg-gray-100'
-        }`}
-      >
-        H2
-      </button>
-      <button
+        isActive={editor.isActive('heading', { level: 2 })}
+        icon={Heading2}
+        title="Heading 2"
+      />
+      <MenuButton
         onClick={() => editor.chain().focus().toggleBulletList().run()}
-        className={`p-2 rounded ${
-          editor.isActive('bulletList') ? 'bg-purple-100' : 'hover:bg-gray-100'
-        }`}
-      >
-        Bullet List
-      </button>
-      <button
+        isActive={editor.isActive('bulletList')}
+        icon={List}
+        title="Bullet List"
+      />
+      <MenuButton
         onClick={() => editor.chain().focus().toggleOrderedList().run()}
-        className={`p-2 rounded ${
-          editor.isActive('orderedList') ? 'bg-purple-100' : 'hover:bg-gray-100'
-        }`}
-      >
-        Ordered List
-      </button>
-      <button
+        isActive={editor.isActive('orderedList')}
+        icon={ListOrdered}
+        title="Ordered List"
+      />
+      <MenuButton
         onClick={() => editor.chain().focus().toggleBlockquote().run()}
-        className={`p-2 rounded ${
-          editor.isActive('blockquote') ? 'bg-purple-100' : 'hover:bg-gray-100'
-        }`}
-      >
-        Quote
-      </button>
-      <button
+        isActive={editor.isActive('blockquote')}
+        icon={Quote}
+        title="Quote"
+      />
+      <MenuButton
         onClick={setLink}
-        className={`p-2 rounded ${
-          editor.isActive('link') ? 'bg-purple-100' : 'hover:bg-gray-100'
-        }`}
-      >
-        Link
-      </button>
-      <label className="p-2 rounded hover:bg-gray-100 cursor-pointer">
-        Upload Image
+        isActive={editor.isActive('link')}
+        icon={LinkIcon}
+        title="Add Link"
+      />
+      <label className="p-2 rounded hover:bg-gray-100 cursor-pointer flex items-center">
+        <ImageIcon size={18} />
         <input
           type="file"
           className="hidden"
           accept="image/*"
           onChange={async (e) => {
-            const file = e.target.files?.[0]
+            const file = e.target.files?.[0];
             if (file) {
-              const formData = new FormData()
-              formData.append('image', file)
+              const formData = new FormData();
+              formData.append('image', file);
               try {
                 const response = await fetch('/api/blog/upload-image', {
                   method: 'POST',
@@ -118,35 +110,33 @@ const MenuBar = ({ editor }) => {
                   headers: {
                     'Authorization': `Bearer ${localStorage.getItem('token')}`
                   }
-                })
-                const data = await response.json()
-                editor.chain().focus().setImage({ src: data.url }).run()
+                });
+                const data = await response.json();
+                editor.chain().focus().setImage({ src: data.url }).run();
               } catch (error) {
-                console.error('Failed to upload image:', error)
+                console.error('Failed to upload image:', error);
               }
             }
           }}
         />
       </label>
-      <button
+      <MenuButton
         onClick={() => editor.chain().focus().undo().run()}
         disabled={!editor.can().chain().focus().undo().run()}
-        className="p-2 rounded hover:bg-gray-100"
-      >
-        Undo
-      </button>
-      <button
+        icon={Undo}
+        title="Undo"
+      />
+      <MenuButton
         onClick={() => editor.chain().focus().redo().run()}
         disabled={!editor.can().chain().focus().redo().run()}
-        className="p-2 rounded hover:bg-gray-100"
-      >
-        Redo
-      </button>
+        icon={Redo}
+        title="Redo"
+      />
     </div>
-  )
+  );
 }
 
-export default function RichTextEditor({ content, onChange }) {
+function RichTextEditor({ content, onChange }) {
   const editor = useEditor({
     extensions: [
       StarterKit,
@@ -160,17 +150,19 @@ export default function RichTextEditor({ content, onChange }) {
     ],
     content,
     onUpdate: ({ editor }) => {
-      onChange(editor.getHTML())
+      onChange(editor.getHTML());
     },
-  })
+  });
 
   return (
-    <div className="border rounded-lg overflow-hidden bg-white">
+    <div className="border rounded-lg overflow-hidden bg-white/80">
       <MenuBar editor={editor} />
       <EditorContent 
         editor={editor} 
-        className="prose max-w-none p-4 min-h-[400px] focus:outline-none" 
+        className="prose max-w-none p-4 min-h-[400px] focus:outline-none"
       />
     </div>
-  )
+  );
 }
+
+export default RichTextEditor;

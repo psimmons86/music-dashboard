@@ -54,16 +54,80 @@ export async function handleSpotifyCallback(code) {
 
 export async function getRecommendations(genre, mood) {
   try {
+    const moodFeatures = {
+      happy: {
+        min_valence: 0.6,
+        target_valence: 0.8,
+        target_energy: 0.8,
+        min_danceability: 0.6,
+        
+        target_tempo: Math.floor(Math.random() * (160 - 120) + 120),
+        target_popularity: Math.floor(Math.random() * (100 - 50) + 50) 
+      },
+      chill: {
+        max_energy: 0.5,
+        target_valence: 0.5,
+        max_tempo: 120,
+        target_acousticness: 0.6,
+        
+        target_instrumentalness: Math.random() * 0.5,
+        target_popularity: Math.floor(Math.random() * (80 - 30) + 30)
+      },
+      energetic: {
+        min_energy: 0.7,
+        target_danceability: 0.7,
+        min_tempo: 120,
+        
+        target_energy: 0.7 + (Math.random() * 0.3), // Random high energy
+        target_popularity: Math.floor(Math.random() * (100 - 60) + 60)
+      },
+      sad: {
+        max_valence: 0.4,
+        target_energy: 0.4,
+        target_acousticness: 0.6,
+        
+        target_tempo: Math.floor(Math.random() * (100 - 60) + 60), // Slower tempo
+        target_popularity: Math.floor(Math.random() * (90 - 40) + 40)
+      },
+      focused: {
+        target_energy: 0.5,
+        max_danceability: 0.4,
+        target_instrumentalness: 0.3,
+        target_tempo: Math.floor(Math.random() * (130 - 90) + 90),
+        target_popularity: Math.floor(Math.random() * (80 - 30) + 30)
+      }
+    };
+
+    const relatedGenres = {
+      rock: ['rock', 'hard-rock', 'alt-rock', 'indie-rock'],
+      pop: ['pop', 'dance-pop', 'indie-pop', 'synth-pop'],
+      'hip hop': ['hip-hop', 'rap', 'urban'],
+      electronic: ['electronic', 'edm', 'dance', 'house'],
+      jazz: ['jazz', 'bebop', 'swing'],
+      classical: ['classical', 'orchestra', 'piano']
+    };
+
+    const seedGenres = relatedGenres[genre.toLowerCase()] || [genre.toLowerCase()];
+    
+    const selectedGenres = seedGenres
+      .sort(() => Math.random() - 0.5)
+      .slice(0, Math.min(3, seedGenres.length))
+      .join(',');
+    
     const params = new URLSearchParams({
-      genre: genre.toLowerCase(),
-      mood: mood.toLowerCase()
+      seed_genres: selectedGenres,
+      limit: 30,
+      ...moodFeatures[mood.toLowerCase()]
     });
     
     const response = await sendRequest(`${BASE_URL}/recommendations?${params}`);
     if (!Array.isArray(response)) {
       throw new Error('Invalid recommendations response');
     }
-    return response;
+
+    return response
+      .sort(() => Math.random() - 0.5)
+      .slice(0, 20);
   } catch (error) {
     console.error('Error fetching recommendations:', error);
     if (error.status === 401) {

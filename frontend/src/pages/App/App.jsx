@@ -11,6 +11,7 @@ import ProfilePage from '../ProfilePage/ProfilePage';
 import SignUpPage from '../SignUpPage/SignUpPage';
 import LogInPage from '../LogInPage/LogInPage';
 import NavBar from '../../components/NavBar/NavBar';
+import { tagColors } from '../../constants';
 
 function SpotifyCallback() {
   const navigate = useNavigate();
@@ -74,11 +75,11 @@ export default function App() {
         {user ? (
           <Routes>
             <Route path="/" element={<HomePage />} />
-            <Route path="/dashboard" element={<DashboardPage />} />
+            <Route path="/dashboard" element={<DashboardPage tagColors={tagColors} />} />
             <Route path="/profile" element={<ProfilePage user={user} />} />
-            <Route path="/blog" element={<BlogListPage />} />
+            <Route path="/blog" element={<BlogListPage tagColors={tagColors} />} />
             <Route path="/blog/create" element={<BlogCreatePage />} />
-            <Route path="/blog/:id" element={<BlogDetailPage />} />
+            <Route path="/blog/:id" element={<BlogDetailPage tagColors={tagColors} />} />
             <Route path="/auth/spotify/callback" element={<SpotifyCallback />} />
           </Routes>
         ) : (

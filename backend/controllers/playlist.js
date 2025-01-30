@@ -9,40 +9,57 @@ const spotifyApi = new SpotifyWebApi({
 
 async function createPlaylist(req, res) {
   try {
-
+    // Get user and check Spotify connection
     const user = await User.findById(req.user._id);
     if (!user?.spotifyAccessToken) {
       return res.status(401).json({ error: 'No Spotify connection found' });
     }
 
-
     spotifyApi.setAccessToken(user.spotifyAccessToken);
 
-
+    // Get user profile
     const me = await spotifyApi.getMe();
     console.log('Got user profile:', me.body.id);
 
-
-    const recentTracks = await spotifyApi.getMyRecentlyPlayedTracks({ limit: 50 });
+    // Get recent tracks
+    const recentTracks = await spotifyApi.getMyRecentlyPlayedTracks({ limit: 5 });
     console.log('Got recent tracks:', recentTracks.body.items.length);
 
     if (!recentTracks.body.items.length) {
       return res.status(400).json({ error: 'No recent tracks found. Try playing some music first!' });
     }
 
+    // Use recent tracks directly instead of recommendations
+    const tracks = recentTracks.body.items
+      .map(item => item.track)
+      .filter((track, index, self) => 
+        // Remove duplicates based on track ID
+        index === self.findIndex((t) => t.id === track.id)
+      );
+
+    console.log('Creating playlist with tracks:', tracks.length);
+
+    // Create timestamp for playlist name
+    const timestamp = new Date().toLocaleTimeString([], { 
+      hour: '2-digit', 
+      minute: '2-digit' 
+    });
+
+    // Create the playlist
     const playlist = await spotifyApi.createPlaylist(me.body.id, {
-      name: `Daily Mix - ${new Date().toLocaleDateString()}`,
-      description: 'Generated from your recently played tracks',
+      name: `Your Mix - ${timestamp}`,
+      description: 'Custom playlist based on your recent listening',
       public: false
     });
-    console.log('Created playlist:', playlist.body.id);
 
-    const trackUris = [...new Set(
-      recentTracks.body.items.map(item => item.track.uri)
-    )].slice(0, 20);
-    await spotifyApi.addTracksToPlaylist(playlist.body.id, trackUris);
-    console.log('Added tracks to playlist');
+    // Add tracks to playlist
+    const trackUris = tracks.map(track => track.uri);
+    if (trackUris.length > 0) {
+      await spotifyApi.addTracksToPlaylist(playlist.body.id, trackUris);
+      console.log('Added tracks to playlist:', trackUris.length);
+    }
 
+    // Return playlist info
     return res.json({
       id: playlist.body.id,
       name: playlist.body.name,
@@ -51,8 +68,10 @@ async function createPlaylist(req, res) {
       trackCount: trackUris.length
     });
 
-  } catch (error) { 
+  } catch (error) {
     console.error('Playlist creation error:', error);
+    
+    // Handle token expiration
     if (error.statusCode === 401) {
       await User.findByIdAndUpdate(req.user._id, {
         spotifyAccessToken: null,
@@ -64,7 +83,12 @@ async function createPlaylist(req, res) {
         reconnectRequired: true 
       });
     }
-    return res.status(500).json({ error: 'Failed to create playlist' });
+
+    // Handle other errors
+    return res.status(500).json({ 
+      error: 'Failed to create playlist',
+      details: error.message
+    });
   }
 }
 

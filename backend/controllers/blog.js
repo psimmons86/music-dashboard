@@ -3,10 +3,36 @@ const Blog = require('../models/blog');
 const blogController = {
   async create(req, res) {
     try {
-      const blog = new Blog({
-        ...req.body,
-        author: req.user._id
+      console.log('Received blog data:', {
+        body: req.body,
+        file: req.file
       });
+
+      const blogData = {
+        title: req.body.title,
+        content: req.body.content,
+        category: req.body.category,
+        summary: req.body.summary,
+        status: req.body.status || 'draft',
+        author: req.user._id
+      };
+
+      if (req.body.tags) {
+        try {
+          blogData.tags = typeof req.body.tags === 'string' 
+            ? JSON.parse(req.body.tags) 
+            : req.body.tags;
+        } catch (e) {
+          console.error('Error parsing tags:', e);
+          blogData.tags = [];
+        }
+      }
+
+      if (req.file) {
+        blogData.image = `/uploads/blog-images/${req.file.filename}`;
+      }
+
+      const blog = new Blog(blogData);
 
       if (req.body.isDraft && req.body.previousDraftId) {
         const previousDraft = await Blog.findOne({
@@ -96,7 +122,26 @@ const blogController = {
         updatedAt: new Date()
       });
 
-      Object.assign(blog, req.body);
+      if (req.body.title) blog.title = req.body.title;
+      if (req.body.content) blog.content = req.body.content;
+      if (req.body.category) blog.category = req.body.category;
+      if (req.body.summary) blog.summary = req.body.summary;
+      if (req.body.status) blog.status = req.body.status;
+      
+      if (req.body.tags) {
+        try {
+          blog.tags = typeof req.body.tags === 'string'
+            ? JSON.parse(req.body.tags)
+            : req.body.tags;
+        } catch (e) {
+          console.error('Error parsing tags:', e);
+        }
+      }
+
+      if (req.file) {
+        blog.image = `/uploads/blog-images/${req.file.filename}`;
+      }
+
       await blog.save();
       res.json(blog);
     } catch (error) {

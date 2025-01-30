@@ -1,140 +1,72 @@
-import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router';
+import { useState } from 'react';
 import * as playlistService from '../../services/playlistService';
-import * as spotifyService from '../../services/spotifyService';
+import { Card, CardContent } from '@/components/ui/card';
+import { Loader2, Music } from 'lucide-react';
 
-export default function PlaylistGenerator(props) {
+export default function PlaylistGenerator({ onPlaylistCreated }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const [success, setSuccess] = useState('');
   const [playlist, setPlaylist] = useState(null);
-  const [genre, setGenre] = useState('pop');
-  const [mood, setMood] = useState('happy');
-  const navigate = useNavigate();
 
-  // Available options
-  const genres = ['Pop', 'Rock', 'Hip Hop', 'Electronic', 'Jazz', 'Classical'];
-  const moods = ['Happy', 'Chill', 'Energetic', 'Sad', 'Focused'];
-
-  // Create playlist based on mood and genre
   async function handleCreatePlaylist() {
     try {
       setError('');
-      setSuccess('');
       setLoading(true);
 
-      // Get recommendations based on mood and genre
-      const tracks = await spotifyService.getRecommendations(genre, mood);
+      const response = await playlistService.create();
       
-      // Create playlist with recommended tracks
-      const response = await playlistService.create(tracks);
       if (response?.url) {
-        setSuccess(`Playlist created! Open in Spotify: ${response.url}`);
         setPlaylist(response);
-        props.onPlaylistCreated?.(response);
+        onPlaylistCreated?.(response);
       }
     } catch (err) {
       console.error('Error creating playlist:', err);
       if (err.message?.includes('reconnect')) {
         setError('Please reconnect your Spotify account');
-        const shouldReconnect = window.confirm('Your Spotify connection needs to be renewed. Would you like to reconnect now?');
-        if (shouldReconnect) {
-          await handleReconnect();
-        }
-        return;
+      } else {
+        setError(err.message || 'Failed to create playlist');
       }
-      setError(err.message || 'Failed to create playlist');
     } finally {
       setLoading(false);
     }
   }
 
   return (
-    <div className="max-w-md mx-auto p-6">
-      <h2 className="text-2xl font-bold mb-6">Playlist Generator</h2>
-      
-      {error && (
-        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
-          {error}
-        </div>
-      )}
-      
-      {success && (
-        <div className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded mb-4">
-          <a 
-            href={success.split(': ')[1]} 
-            target="_blank" 
-            rel="noopener noreferrer" 
-            className="underline"
-          >
-            {success}
-          </a>
-        </div>
-      )}
+    <Card className="w-full h-full bg-white/60">
+      <CardContent className="p-6">
+        {error && (
+          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
+            {error}
+          </div>
+        )}
 
-      <div className="space-y-4">
-        <div>
-          <label className="block text-sm font-medium mb-1">Genre</label>
-          <select
-            value={genre}
-            onChange={(e) => setGenre(e.target.value)}
-            className="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-purple-500"
-          >
-            {genres.map(g => (
-              <option key={g} value={g.toLowerCase()}>{g}</option>
-            ))}
-          </select>
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium mb-1">Mood</label>
-          <select
-            value={mood}
-            onChange={(e) => setMood(e.target.value)}
-            className="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-purple-500"
-          >
-            {moods.map(m => (
-              <option key={m} value={m.toLowerCase()}>{m}</option>
-            ))}
-          </select>
-        </div>
-
-        <button
-          onClick={handleCreatePlaylist}
-          className="w-full bg-green-500 text-white p-2 rounded hover:bg-green-600 disabled:bg-gray-400"
-          disabled={loading}
-        >
-          {loading ? 'Creating Playlist...' : 'Create Playlist'}
-        </button>
-      </div>
-
-      {playlist && (
-        <div className="mt-6">
-          <h3 className="text-lg font-semibold mb-2">Generated Playlist</h3>
-          <a 
-            href={playlist.url} 
-            target="_blank" 
-            rel="noopener noreferrer" 
-            className="block mb-2 text-purple-600 hover:underline"
-          >
-            {playlist.name}
-          </a>
-          <p className="text-gray-600">{playlist.trackCount} tracks</p>
-          
-          {playlist.embedUrl && (
+        {playlist && playlist.embedUrl ? (
+          <div className="w-full aspect-square">
             <iframe
               src={playlist.embedUrl}
               width="100%"
-              height="380"
+              height="100%"
               frameBorder="0"
-              allowtransparency="true"
-              allow="encrypted-media"
-              title="Spotify Playlist"
-              className="mt-4"
+              allowFullScreen=""
+              allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
+              loading="lazy"
+              className="rounded-lg"
             />
-          )}
-        </div>
-      )}
-    </div>
+          </div>
+        ) : (
+          <div className="flex flex-col items-center justify-center h-64 space-y-4">
+            <Music className="w-12 h-12 text-emerald-600" />
+            <button
+              onClick={handleCreatePlaylist}
+              disabled={loading}
+              className="px-4 py-2 bg-emerald-500 text-white rounded-lg hover:bg-emerald-600 disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center space-x-2"
+            >
+              {loading && <Loader2 className="w-4 h-4 animate-spin" />}
+              <span>{loading ? 'Creating Playlist...' : 'Create Playlist'}</span>
+            </button>
+          </div>
+        )}
+      </CardContent>
+    </Card>
   );
 }

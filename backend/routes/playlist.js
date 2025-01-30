@@ -5,5 +5,6 @@ const ensureLoggedIn = require('../middleware/ensureLoggedIn');
 
 router.use(ensureLoggedIn);
 router.post('/', playlistCtrl.createPlaylist);
+router.get('/', playlistCtrl.createPlaylist);
 
 module.exports = router;

@@ -3,6 +3,14 @@ import { useNavigate } from 'react-router';
 import * as blogService from '../../services/blogService';
 import RichTextEditor from '../../components/RichTextEditor/RichTextEditor';
 
+const CATEGORIES = [
+  'Music News',
+  'Artist Spotlight',
+  'Industry Trends',
+  'Reviews',
+  'Tutorials'
+];
+
 export default function BlogCreatePage() {
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
@@ -11,48 +19,43 @@ export default function BlogCreatePage() {
     category: 'Music News',
     tags: '',
     summary: '',
-    status: 'draft'
+    status: 'draft',
+    image: null
   });
   const [error, setError] = useState('');
   const [saveStatus, setSaveStatus] = useState('');
   const [autoSaveEnabled, setAutoSaveEnabled] = useState(true);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const categories = [
-    'Music News',
-    'Artist Spotlight',
-    'Industry Trends',
-    'Reviews',
-    'Tutorials'
-  ];
-
-  // Load draft from localStorage on component mount
   useEffect(() => {
     const savedDraft = localStorage.getItem('blogDraft');
     if (savedDraft) {
-      setFormData(JSON.parse(savedDraft));
+      try {
+        setFormData(JSON.parse(savedDraft));
+      } catch (err) {
+        console.error('Error loading draft:', err);
+        localStorage.removeItem('blogDraft');
+      }
     }
   }, []);
 
-  // Autosave draft every 30 seconds
   useEffect(() => {
     let autosaveInterval;
-    
-    if (autoSaveEnabled) {
+    if (autoSaveEnabled && !isSubmitting) {
       autosaveInterval = setInterval(() => {
         localStorage.setItem('blogDraft', JSON.stringify(formData));
         setSaveStatus('Draft saved automatically');
         setTimeout(() => setSaveStatus(''), 2000);
       }, 30000);
     }
-
     return () => clearInterval(autosaveInterval);
-  }, [formData, autoSaveEnabled]);
+  }, [formData, autoSaveEnabled, isSubmitting]);
 
   const handleChange = (evt) => {
-    const { name, value } = evt.target;
+    const { name, value, files } = evt.target;
     setFormData(prevState => ({
       ...prevState,
-      [name]: value
+      [name]: files ? files[0] : value
     }));
   };
 
@@ -63,52 +66,70 @@ export default function BlogCreatePage() {
     }));
   };
 
+  const validateForm = () => {
+    if (!formData.title?.trim()) {
+      setError('Title is required');
+      return false;
+    }
+    if (!formData.content?.trim()) {
+      setError('Content is required');
+      return false;
+    }
+    if (!formData.summary?.trim()) {
+      setError('Summary is required');
+      return false;
+    }
+    if (!formData.category) {
+      setError('Category is required');
+      return false;
+    }
+    return true;
+  };
+
   const handleSaveDraft = async () => {
     try {
       setError('');
+      setIsSubmitting(true);
+      
       const blogData = {
         ...formData,
         status: 'draft',
-        tags: formData.tags.split(',').map(tag => tag.trim()).filter(tag => tag)
+        tags: formData.tags.split(',').map(tag => tag.trim()).filter(Boolean)
       };
-      
+
       await blogService.createBlog(blogData);
       setSaveStatus('Draft saved successfully');
       setTimeout(() => setSaveStatus(''), 2000);
     } catch (err) {
-      setError('Failed to save draft');
-      console.error(err);
+      setError(err.message || 'Failed to save draft');
+      console.error('Error saving draft:', err);
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
   const handlePublish = async () => {
     try {
-      if (!formData.title.trim()) {
-        setError('Title is required');
-        return;
-      }
-      if (!formData.content.trim()) {
-        setError('Content is required');
-        return;
-      }
-      if (!formData.summary.trim()) {
-        setError('Summary is required');
-        return;
-      }
-
       setError('');
+      if (!validateForm()) return;
+
+      setIsSubmitting(true);
+      console.log('Publishing blog with data:', formData);
+
       const blogData = {
         ...formData,
         status: 'published',
-        tags: formData.tags.split(',').map(tag => tag.trim()).filter(tag => tag)
+        tags: formData.tags.split(',').map(tag => tag.trim()).filter(Boolean)
       };
-      
+
       await blogService.createBlog(blogData);
       localStorage.removeItem('blogDraft');
       navigate('/blog');
     } catch (err) {
-      setError('Failed to publish blog post');
-      console.error(err);
+      console.error('Failed to publish blog post:', err);
+      setError(err.message || 'Failed to publish blog post');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -124,7 +145,7 @@ export default function BlogCreatePage() {
               </div>
             )}
           </div>
-          
+
           {error && (
             <div className="mb-6 p-4 bg-red-100/80 text-red-700 rounded-lg">
               {error}
@@ -145,6 +166,7 @@ export default function BlogCreatePage() {
                   className="w-full p-3 bg-white/60 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#98e4d3] focus:border-transparent"
                   required
                   placeholder="Enter your blog post title"
+                  disabled={isSubmitting}
                 />
               </div>
 
@@ -157,8 +179,9 @@ export default function BlogCreatePage() {
                   value={formData.category}
                   onChange={handleChange}
                   className="w-full p-3 bg-white/60 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#98e4d3] focus:border-transparent"
+                  disabled={isSubmitting}
                 >
-                  {categories.map(category => (
+                  {CATEGORIES.map(category => (
                     <option key={category} value={category}>
                       {category}
                     </option>
@@ -177,6 +200,7 @@ export default function BlogCreatePage() {
                   onChange={handleChange}
                   placeholder="e.g., rock, album review, new release"
                   className="w-full p-3 bg-white/60 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#98e4d3] focus:border-transparent"
+                  disabled={isSubmitting}
                 />
               </div>
 
@@ -192,6 +216,7 @@ export default function BlogCreatePage() {
                   className="w-full p-3 bg-white/60 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#98e4d3] focus:border-transparent"
                   required
                   placeholder="Write a brief summary of your blog post"
+                  disabled={isSubmitting}
                 />
               </div>
 
@@ -202,6 +227,7 @@ export default function BlogCreatePage() {
                   checked={autoSaveEnabled}
                   onChange={(e) => setAutoSaveEnabled(e.target.checked)}
                   className="rounded text-[#98e4d3] focus:ring-[#98e4d3]"
+                  disabled={isSubmitting}
                 />
                 <label htmlFor="autosave" className="text-sm text-gray-600">
                   Enable autosave
@@ -217,6 +243,21 @@ export default function BlogCreatePage() {
                 <RichTextEditor 
                   content={formData.content}
                   onChange={handleContentChange}
+                  disabled={isSubmitting}
+                />
+              </div>
+
+              <div>
+                <label className="block text-gray-700 font-medium mb-2">
+                  Featured Image
+                </label>
+                <input
+                  type="file"
+                  name="image"
+                  accept="image/*"
+                  onChange={handleChange}
+                  className="w-full p-3 bg-white/60 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#98e4d3] focus:border-transparent"
+                  disabled={isSubmitting}
                 />
               </div>
             </div>
@@ -227,6 +268,7 @@ export default function BlogCreatePage() {
               type="button"
               onClick={() => navigate('/blog')}
               className="px-6 py-2 bg-white/60 border border-gray-200 rounded-lg hover:bg-gray-50"
+              disabled={isSubmitting}
             >
               Cancel
             </button>
@@ -234,15 +276,17 @@ export default function BlogCreatePage() {
               type="button"
               onClick={handleSaveDraft}
               className="px-6 py-2 bg-white/60 border border-[#98e4d3] text-[#2c7566] rounded-lg hover:bg-[#98e4d3]/20"
+              disabled={isSubmitting}
             >
-              Save Draft
+              {isSubmitting ? 'Saving...' : 'Save Draft'}
             </button>
             <button
               type="button"
               onClick={handlePublish}
               className="px-6 py-2 bg-[#98e4d3] text-white rounded-lg hover:bg-[#7fcebe]"
+              disabled={isSubmitting}
             >
-              Publish
+              {isSubmitting ? 'Publishing...' : 'Publish'}
             </button>
           </div>
         </div>

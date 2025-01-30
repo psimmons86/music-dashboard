@@ -5,10 +5,12 @@ export default async function sendRequest(url, method = 'GET', payload = null) {
     const options = { method };
     
     if (payload) {
+      options.headers = options.headers || {};
+      
       if (payload instanceof FormData) {
         options.body = payload;
       } else {
-        options.headers = { 'Content-Type': 'application/json' };
+        options.headers['Content-Type'] = 'application/json';
         options.body = JSON.stringify(payload);
       }
     }
@@ -21,12 +23,9 @@ export default async function sendRequest(url, method = 'GET', payload = null) {
 
     const res = await fetch(url, options);
     
-    if (res.status === 204) {
-      return null;
-    }
+    if (res.status === 204) return null;
     
-    const json = await res.json().catch(e => {
-      console.error('JSON parse error:', e);
+    const json = await res.json().catch(() => {
       throw new Error('Invalid response format from server');
     });
     
@@ -40,16 +39,14 @@ export default async function sendRequest(url, method = 'GET', payload = null) {
     return json;
   } catch (error) {
     console.error('Request error:', error);
+    
     if (error.status === 401) {
       localStorage.removeItem('token');
       window.location.href = '/login';
-      throw new Error('Session expired. Please log in again.');
     }
     
-    if (error instanceof Error) {
-      throw error;
-    } else {
-      throw new Error(JSON.stringify(error));
-    }
+    throw error instanceof Error 
+      ? error 
+      : new Error(JSON.stringify(error));
   }
 }

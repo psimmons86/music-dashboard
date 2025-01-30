@@ -1,5 +1,7 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import * as playlistService from '../../services/playlistService';
+import { Card, CardContent } from '@/components/ui/card';
+import { Loader2, Music } from 'lucide-react';
 
 export default function SpotifyPlayer() {
   const [playlistEmbedUrl, setPlaylistEmbedUrl] = useState(null);
@@ -17,42 +19,52 @@ export default function SpotifyPlayer() {
       }
     } catch (err) {
       console.error('Error creating playlist:', err);
-      setError(err.message || 'Failed to create playlist');
+      if (err.message?.includes('reconnect')) {
+        setError('Please reconnect your Spotify account');
+      } else {
+        setError(err.message || 'Failed to create playlist');
+      }
     } finally {
       setLoading(false);
     }
   }
 
   return (
-    <div className="spotify-player-container h-full flex flex-col">
-      {error && (
-        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
-          {error}
-        </div>
-      )}
+    <Card className="w-full h-full bg-white/60">
+      <CardContent className="p-6">
+        {error && (
+          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
+            {error}
+          </div>
+        )}
 
-      {playlistEmbedUrl ? (
-        <iframe
-          src={playlistEmbedUrl}
-          width="100%"
-          height="380"
-          frameBorder="0"
-          allowFullScreen=""
-          allow="encrypted-media"
-          title="Spotify Playlist"
-          className="flex-grow"
-        />
-      ) : (
-        <div className="flex flex-col items-center justify-center h-full">
-          <button
-            onClick={handleCreatePlaylist}
-            disabled={loading}
-            className="bg-green-500 text-white p-2 rounded hover:bg-green-600 disabled:bg-gray-400"
-          >
-            {loading ? 'Creating Playlist...' : 'Generate Daily Mix'}
-          </button>
-        </div>
-      )}
-    </div>
+        {playlistEmbedUrl ? (
+          <div className="w-full aspect-square">
+            <iframe
+              src={playlistEmbedUrl}
+              width="100%"
+              height="100%"
+              frameBorder="0"
+              allowFullScreen=""
+              allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
+              loading="lazy"
+              className="rounded-lg"
+            />
+          </div>
+        ) : (
+          <div className="flex flex-col items-center justify-center h-64 space-y-4">
+            <Music className="w-12 h-12 text-emerald-600" />
+            <button
+              onClick={handleCreatePlaylist}
+              disabled={loading}
+              className="px-4 py-2 bg-emerald-500 text-white rounded-lg hover:bg-emerald-600 disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center space-x-2"
+            >
+              {loading && <Loader2 className="w-4 h-4 animate-spin" />}
+              <span>{loading ? 'Generating Daily Mix...' : 'Generate Daily Mix'}</span>
+            </button>
+          </div>
+        )}
+      </CardContent>
+    </Card>
   );
 }
