@@ -1,4 +1,3 @@
-
 const path = require('path');
 const express = require('express');
 const logger = require('morgan');
@@ -8,17 +7,17 @@ const app = express();
 require('dotenv').config();
 require('./db');
 
-
+// Basic middleware
 app.use(logger('dev'));
 app.use(cors()); 
-app.use(express.static(path.join(__dirname, '../frontend/dist')));
 app.use(express.json());
+app.use(express.static(path.join(__dirname, '../frontend/dist')));
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
-// Public Routes
+// Public Routes - NO auth required
 app.use('/api/auth', require('./routes/auth'));
 
-// Auth Middleware
+// All routes after this require authentication
 app.use(require('./middleware/checkToken'));
 app.use(require('./middleware/ensureLoggedIn'));
 
@@ -31,13 +30,13 @@ app.use('/api/posts', require('./routes/posts'));
 app.use('/api/playlist', require('./routes/playlist'));
 app.use('/api/blog', require('./routes/blog'));
 
-// Catch-all route
-app.get('*', function (req, res) {
+// Catch-all route for SPA
+app.get('*', function(req, res) {
   res.sendFile(path.join(__dirname, '../frontend/dist/index.html'));
 });
 
 const port = process.env.PORT || 3000;
 
 app.listen(port, () => {
-  console.log(`Express app is running on port ${port}`);
+  console.log(`Express app running on port ${port}`);
 });

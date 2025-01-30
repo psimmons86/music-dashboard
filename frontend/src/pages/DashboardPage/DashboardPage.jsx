@@ -1,4 +1,5 @@
-// DashboardPage.jsx
+// src/pages/DashboardPage/DashboardPage.jsx
+
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router';
 import * as postService from '../../services/postService';
@@ -8,12 +9,12 @@ import * as userService from '../../services/userService';
 import NewsFeed from '../../components/NewsFeed/NewsFeed';
 import SpotifyPlayer from '../../components/SpotifyPlayer/SpotifyPlayer';
 import SpotifyConnect from '../../components/SpotifyConnect/SpotifyConnect';
+import PostForm from '../../components/PostForm/PostForm';
 import './DashboardPage.css';
 
 export default function DashboardPage() {
   const [posts, setPosts] = useState([]);
   const [spotifyConnected, setSpotifyConnected] = useState(false);
-  const [newPost, setNewPost] = useState('');
   const [savedArticles, setSavedArticles] = useState([]);
   const [error, setError] = useState('');
   const [userProfile, setUserProfile] = useState(null);
@@ -42,16 +43,18 @@ export default function DashboardPage() {
     fetchData();
   }, []);
 
-  async function handleSubmitPost(evt) {
-    evt.preventDefault();
+  const handleCreatePost = async (postData) => {
     try {
-      const post = await postService.create(newPost);
-      setPosts([post, ...posts]);
-      setNewPost('');
+      const newPost = await postService.create({
+        content: postData.content,
+        currentSong: postData.currentSong
+      });
+      setPosts([newPost, ...posts]);
     } catch (err) {
       console.error('Error creating post:', err);
+      setError('Failed to create post. Please try again.');
     }
-  }
+  };
 
   async function handleDeleteArticle(articleId) {
     try {
@@ -65,68 +68,75 @@ export default function DashboardPage() {
   return (
     <div className="min-h-screen bg-[#98e4d3] p-6">
       <nav className="flex justify-between items-center mb-6">
-  <h1 className="text-2xl font-bold">Dashboard</h1>
-  <Link 
-    to="/blog/create"
-    className="bg-[#d4e7aa] text-gray-800 px-4 py-2 rounded-lg hover:bg-[#c3d69b] transition-colors"
-  >
-    Create Blog
-  </Link>
-</nav>
+        <h1 className="text-2xl font-bold">Dashboard</h1>
+        <Link 
+          to="/blog/create"
+          className="bg-[#d4e7aa] text-gray-800 px-4 py-2 rounded-lg hover:bg-[#c3d69b] transition-colors"
+        >
+          Create Blog
+        </Link>
+      </nav>
       
       <div className="grid grid-cols-12 gap-6 max-w-screen-2xl mx-auto">
-
         {/* Left Column - Social Feed */}
-<div className="col-span-4">
-  <div className="bg-[#d4e7aa]/70 rounded-2xl p-6 h-[75vh] relative"> {/* Added relative positioning */}
-    <h2 className="text-2xl font-bold mb-6 text-gray-800">Social Feed</h2>
+        <div className="col-span-4">
+          <div className="bg-[#d4e7aa]/70 rounded-2xl p-6 h-[75vh] relative">
+            <h2 className="text-2xl font-bold mb-6 text-gray-800">Social Feed</h2>
 
-    <form onSubmit={handleSubmitPost} className="mb-6">
-      <textarea
-        value={newPost}
-        onChange={(e) => setNewPost(e.target.value)}
-        placeholder="Share your music thoughts..."
-        className="w-full p-3 border rounded-lg bg-white/60 focus:ring-2 focus:ring-[#98e4d3] mb-2"
-        rows="4"
-      />
-      <button
-        type="submit"
-        className="w-full bg-[#98e4d3]/80 text-white py-2 rounded-lg hover:bg-[#98e4d3] transition-colors"
-      >
-        Post
-      </button>
-    </form>
+            <PostForm onSubmit={handleCreatePost} />
 
-    {/* Updated scrollable container with absolute positioning */}
-    <div className="absolute inset-x-6 bottom-6 top-[180px] overflow-y-auto">
-      <div className="space-y-4">
-        {posts.map((post) => (
-          <div key={post._id} className="p-4 bg-white/60 rounded-lg w-full">
-            <p className="text-gray-700 leading-relaxed line-clamp-[12]">
-              {post.content}
-            </p>
+            {/* Posts List */}
+            <div className="absolute inset-x-6 bottom-6 top-[180px] overflow-y-auto">
+              <div className="space-y-4">
+                {posts.map((post) => (
+                  <div key={post._id} className="p-4 bg-white/60 rounded-lg w-full">
+                    <div className="flex items-center gap-3 mb-3">
+                      <div className="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center">
+                        <span className="text-purple-600 font-semibold">
+                          {post.user.name.charAt(0).toUpperCase()}
+                        </span>
+                      </div>
+                      <div>
+                        <h4 className="font-semibold text-gray-800">{post.user.name}</h4>
+                        <time className="text-sm text-gray-500">
+                          {new Date(post.createdAt).toLocaleDateString()}
+                        </time>
+                      </div>
+                    </div>
+                    <p className="text-gray-700 leading-relaxed whitespace-pre-wrap">
+                      {post.content}
+                    </p>
+                    {post.currentSong && (
+                      <div className="mt-3 flex items-center gap-2 text-sm text-gray-600 bg-gray-50/80 p-2 rounded-lg">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M9 18V5l12-2v13" />
+                          <circle cx="6" cy="18" r="3" />
+                          <circle cx="21" cy="16" r="3" />
+                        </svg>
+                        <span>Currently listening to: {post.currentSong}</span>
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
-        ))}
-      </div>
-    </div>
-  </div>
-</div>
+        </div>
 
         {/* Middle Column - Spotify Section */}
-  
-<div className="col-span-4">
-  <div className="bg-[#f7cba3]/70 rounded-2xl p-6 h-[75vh]">
-    <h2 className="text-2xl font-bold mb-6 text-gray-800">Music Player</h2>
-    {spotifyConnected ? (
-      <SpotifyPlayer />
-    ) : (
-      <div className="text-center">
-        <p className="text-gray-600 mb-6">Connect Spotify to create playlists</p>
-        <SpotifyConnect />
-      </div>
-    )}
-  </div>
-</div>
+        <div className="col-span-4">
+          <div className="bg-[#f7cba3]/70 rounded-2xl p-6 h-[75vh]">
+            <h2 className="text-2xl font-bold mb-6 text-gray-800">Music Player</h2>
+            {spotifyConnected ? (
+              <SpotifyPlayer />
+            ) : (
+              <div className="text-center">
+                <p className="text-gray-600 mb-6">Connect Spotify to create playlists</p>
+                <SpotifyConnect />
+              </div>
+            )}
+          </div>
+        </div>
 
         {/* Right Column - Profile and News */}
         <div className="col-span-4 space-y-6">

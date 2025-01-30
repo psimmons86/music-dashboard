@@ -1,18 +1,22 @@
 const mongoose = require('mongoose');
 const Schema = mongoose.Schema;
 
-const postSchema = new Schema(
-  {
-    content: { type: String, required: true },
-    user: {
-      type: Schema.Types.ObjectId,
-      required: true,
-      ref: 'User'
-    },
+const postSchema = new Schema({
+  content: { 
+    type: String, 
+    required: true 
   },
-  {
-    timestamps: true,
-  }
-);
+  currentSong: {
+    type: String,
+    default: ''
+  },
+  user: {
+    type: Schema.Types.ObjectId,
+    required: true,
+    ref: 'User'
+  },
+}, {
+  timestamps: true
+});
 
 module.exports = mongoose.model('Post', postSchema);

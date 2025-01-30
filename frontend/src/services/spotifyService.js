@@ -1,18 +1,6 @@
-// services/spotifyService.js
 import sendRequest from './sendRequest';
 
 const BASE_URL = '/api/spotify';
-
-
-export async function getSpotifyStatus() {
-  try {
-    const response = await sendRequest(`${BASE_URL}/status`);
-    return response;
-  } catch (error) {
-    console.error('Error checking Spotify status:', error);
-    return { connected: false };
-  }
-}
 
 export async function connectSpotify() {
   try {
@@ -21,6 +9,16 @@ export async function connectSpotify() {
   } catch (error) {
     console.error('Error connecting to Spotify:', error);
     throw new Error('Failed to connect to Spotify');
+  }
+}
+
+export async function getSpotifyStatus() {
+  try {
+    const response = await sendRequest(`${BASE_URL}/status`);
+    return response;
+  } catch (error) {
+    console.error('Error checking Spotify status:', error);
+    return { connected: false };
   }
 }
 
@@ -33,6 +31,7 @@ export async function disconnectSpotify() {
     throw new Error('Failed to disconnect from Spotify');
   }
 }
+
 export async function getTopArtists() {
   try {
     const response = await sendRequest(`${BASE_URL}/top-artists`);
@@ -71,18 +70,5 @@ export async function handleSpotifyCallback(code) {
   } catch (error) {
     console.error('Error handling Spotify callback:', error);
     throw new Error('Failed to complete Spotify connection');
-  }
-}
-
-export async function refreshToken() {
-  try {
-    const response = await sendRequest(`${BASE_URL}/refresh`, 'POST');
-    return response;
-  } catch (error) {
-    console.error('Error refreshing token:', error);
-    if (error.status === 401) {
-      throw new Error('Please reconnect your Spotify account');
-    }
-    throw error;
   }
 }

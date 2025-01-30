@@ -4,8 +4,9 @@ export default function SpotifyConnect() {
   const handleConnect = async () => {
     try {
       const response = await connectSpotify();
-      console.log('Spotify connection URL:', response.url);
-      window.location.href = response.url;
+      if (response?.url) {
+        window.location.href = response.url;
+      }
     } catch (error) {
       console.error('Error connecting to Spotify:', error);
     }
