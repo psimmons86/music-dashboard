@@ -1,137 +1,172 @@
 import { useState, useEffect } from 'react';
-import { getSpotifyStatus, disconnectSpotify } from '../../services/spotifyService';
-import { getProfile, updateProfile, uploadProfilePicture } from '../../services/userService';
-import SpotifyConnect from '../../components/SpotifyConnect/SpotifyConnect';
+import { 
+  getProfile, 
+  updateProfile, 
+  uploadProfilePicture, 
+  getFavorites, 
+  setFavorites 
+} from '../../services/userService';
+import { 
+  getSpotifyStatus, 
+  disconnectSpotify 
+} from '../../services/spotifyService';
+import SpotifyConnect from "../../components/SpotifyConnect/SpotifyConnect";
 import './ProfilePage.css';
 
+const GENRES = [
+  'Rock', 'Hip Hop', 'Electronic', 'Pop', 
+  'Jazz', 'Classical', 'R&B', 'Country', 
+  'Metal', 'Folk', 'Blues'
+];
+
+const MOODS = [
+  'Happy', 'Chill', 'Energetic', 
+  'Melancholic', 'Romantic', 'Focused'
+];
+
 export default function ProfilePage({ user }) {
-  const [spotifyConnected, setSpotifyConnected] = useState(false);
-  const [error, setError] = useState('');
-  const [success, setSuccess] = useState('');
-  const [isEditing, setIsEditing] = useState(false);
   const [profileData, setProfileData] = useState({
-    name: user?.name || '',
+    name: '',
     bio: '',
     location: '',
     socialLinks: {
-      discogs: '',
-      vinylVault: '',
-      lastFm: ''
+      discogs: { url: '', verified: false },
+      vinylVault: { url: '', verified: false },
+      lastFm: { url: '', verified: false }
+    },
+    preferences: {
+      privacyLevel: 'public',
+      emailNotifications: true
     }
   });
+  const [favoriteGenres, setFavoriteGenres] = useState([]);
+  const [favoriteMoods, setFavoriteMoods] = useState([]);
+  const [spotifyConnected, setSpotifyConnected] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
 
   useEffect(() => {
-    async function loadProfile() {
+    async function loadProfileData() {
       try {
-        const profile = await getProfile();
-        if (profile) {
-          setProfileData({
-            name: profile.name,
-            bio: profile.bio || '',
-            location: profile.location || '',
-            socialLinks: {
-              discogs: profile.socialLinks?.discogs || '',
-              vinylVault: profile.socialLinks?.vinylVault || '',
-              lastFm: profile.socialLinks?.lastFm || ''
-            }
-          });
-        }
+        const [profileResponse, favoritesResponse, spotifyStatus] = await Promise.all([
+          getProfile(),
+          getFavorites(),
+          getSpotifyStatus()
+        ]);
 
-        try {
-          const spotifyStatus = await getSpotifyStatus();
-          setSpotifyConnected(spotifyStatus.connected);
-        } catch (spotifyErr) {
-          console.error('Spotify status error:', spotifyErr);
-        }
+        setProfileData({
+          name: profileResponse.name,
+          bio: profileResponse.bio || '',
+          location: profileResponse.location || '',
+          socialLinks: profileResponse.socialLinks || {
+            discogs: { url: '', verified: false },
+            vinylVault: { url: '', verified: false },
+            lastFm: { url: '', verified: false }
+          },
+          preferences: profileResponse.preferences || {
+            privacyLevel: 'public',
+            emailNotifications: true
+          }
+        });
+
+        setFavoriteGenres(favoritesResponse.favoriteGenres || []);
+        setFavoriteMoods(favoritesResponse.favoriteMoods || []);
+        setSpotifyConnected(spotifyStatus.connected);
       } catch (err) {
-        console.error('Profile loading error:', err);
         setError('Failed to load profile data');
       }
     }
-    
-    if (user?._id) {
-      loadProfile();
-    }
-  }, [user]);
 
-  async function handleDisconnect() {
-    try {
-      setError('');
-      setSuccess('');
-      await disconnectSpotify();
-      setSpotifyConnected(false);
-      setSuccess('Successfully disconnected from Spotify');
-    } catch (err) {
-      setError('Failed to disconnect from Spotify');
-    }
-  }
+    loadProfileData();
+  }, []);
 
-  async function handleProfileUpdate(evt) {
-    evt.preventDefault();
+  const handleProfileUpdate = async (e) => {
+    e.preventDefault();
     try {
-      setError('');
-      setSuccess('');
-      await updateProfile(profileData);
-      setSuccess('Profile updated successfully');
+      const updatedProfile = await updateProfile({
+        ...profileData,
+        favoriteGenres,
+        favoriteMoods
+      });
+      
+      setProfileData(updatedProfile);
       setIsEditing(false);
+      setSuccess('Profile updated successfully');
+      setTimeout(() => setSuccess(''), 3000);
     } catch (err) {
       setError('Failed to update profile');
-      console.error('Update error:', err);
     }
-  }
+  };
 
-  async function handleImageUpload(evt) {
-    const file = evt.target.files[0];
+  const handleImageUpload = async (e) => {
+    const file = e.target.files[0];
     if (file) {
       try {
-        setError('');
-        setSuccess('');
         await uploadProfilePicture(file);
-        setSuccess('Profile picture updated successfully');
+        setSuccess('Profile picture updated');
+        setTimeout(() => setSuccess(''), 3000);
       } catch (err) {
         setError('Failed to upload profile picture');
-        console.error('Upload error:', err);
       }
     }
-  }
+  };
+
+  const handleDisconnectSpotify = async () => {
+    try {
+      await disconnectSpotify();
+      setSpotifyConnected(false);
+      setSuccess('Spotify disconnected');
+      setTimeout(() => setSuccess(''), 3000);
+    } catch (err) {
+      setError('Failed to disconnect Spotify');
+    }
+  };
+
+  const toggleGenre = (genre) => {
+    setFavoriteGenres(prev => 
+      prev.includes(genre)
+        ? prev.filter(g => g !== genre)
+        : [...prev, genre].slice(0, 5)
+    );
+  };
+
+  const toggleMood = (mood) => {
+    setFavoriteMoods(prev => 
+      prev.includes(mood)
+        ? prev.filter(m => m !== mood)
+        : [...prev, mood].slice(0, 3)
+    );
+  };
 
   return (
     <div className="profile-page">
-      {error && (
-        <div className="error-message">{error}</div>
-      )}
-      {success && (
-        <div className="success-message">{success}</div>
-      )}
+      {error && <div className="error-message">{error}</div>}
+      {success && <div className="success-message">{success}</div>}
 
       <section className="profile-section">
         <h2>Profile Information</h2>
         
         <div className="profile-picture-container">
-  <img
-    src={profileData.profilePicture || '/default-profile.png'}
-    alt=""
-    className="profile-picture"
-    onError={(e) => {
-      console.error('Image failed to load:', e.target.src);
-      e.target.src = '/default-profile.png';
-    }}
-    aria-hidden="true"
-  />
-  <input
-    type="file"
-    accept="image/*"
-    onChange={handleImageUpload}
-    className="hidden"
-    id="profile-picture-input"
-  />
-  <label
-    htmlFor="profile-picture-input"
-    className="profile-picture-overlay"
-  >
-    Change Picture
-  </label>
-</div>
+          <img
+            src={profileData.profilePicture || '/default-profile.png'}
+            alt=""
+            className="profile-picture"
+          />
+          <input
+            type="file"
+            accept="image/*"
+            onChange={handleImageUpload}
+            className="hidden"
+            id="profile-picture-input"
+          />
+          <label
+            htmlFor="profile-picture-input"
+            className="profile-picture-overlay"
+          >
+            Change Picture
+          </label>
+        </div>
 
         {isEditing ? (
           <form onSubmit={handleProfileUpdate} className="profile-edit-form">
@@ -163,43 +198,69 @@ export default function ProfilePage({ user }) {
               />
             </div>
 
-            <div className="social-links">
-              <h3>Social Links</h3>
-              <div className="form-group">
-                <label>Discogs</label>
-                <input
-                  type="url"
-                  value={profileData.socialLinks.discogs}
-                  onChange={(e) => setProfileData({
-                    ...profileData,
-                    socialLinks: {...profileData.socialLinks, discogs: e.target.value}
-                  })}
-                />
+            <div className="music-preferences">
+              <h3>Favorite Genres (Max 5)</h3>
+              <div className="genre-grid">
+                {GENRES.map(genre => (
+                  <label key={genre} className="checkbox-label">
+                    <input
+                      type="checkbox"
+                      checked={favoriteGenres.includes(genre)}
+                      onChange={() => toggleGenre(genre)}
+                    />
+                    {genre}
+                  </label>
+                ))}
               </div>
 
-              <div className="form-group">
-                <label>Vinyl Vault</label>
-                <input
-                  type="url"
-                  value={profileData.socialLinks.vinylVault}
-                  onChange={(e) => setProfileData({
-                    ...profileData,
-                    socialLinks: {...profileData.socialLinks, vinylVault: e.target.value}
-                  })}
-                />
+              <h3>Favorite Moods (Max 3)</h3>
+              <div className="mood-grid">
+                {MOODS.map(mood => (
+                  <label key={mood} className="checkbox-label">
+                    <input
+                      type="checkbox"
+                      checked={favoriteMoods.includes(mood)}
+                      onChange={() => toggleMood(mood)}
+                    />
+                    {mood}
+                  </label>
+                ))}
               </div>
+            </div>
 
-              <div className="form-group">
-                <label>Last.fm</label>
+            <div className="form-group">
+              <label>Privacy Level</label>
+              <select
+                value={profileData.preferences.privacyLevel}
+                onChange={(e) => setProfileData({
+                  ...profileData, 
+                  preferences: {
+                    ...profileData.preferences, 
+                    privacyLevel: e.target.value
+                  }
+                })}
+              >
+                <option value="public">Public</option>
+                <option value="private">Private</option>
+                <option value="friends">Friends Only</option>
+              </select>
+            </div>
+
+            <div className="form-group">
+              <label>
                 <input
-                  type="url"
-                  value={profileData.socialLinks.lastFm}
+                  type="checkbox"
+                  checked={profileData.preferences.emailNotifications}
                   onChange={(e) => setProfileData({
-                    ...profileData,
-                    socialLinks: {...profileData.socialLinks, lastFm: e.target.value}
+                    ...profileData, 
+                    preferences: {
+                      ...profileData.preferences, 
+                      emailNotifications: e.target.checked
+                    }
                   })}
                 />
-              </div>
+                Receive Email Notifications
+              </label>
             </div>
 
             <div className="profile-actions">
@@ -230,40 +291,6 @@ export default function ProfilePage({ user }) {
             {profileData.bio && (
               <p className="bio">{profileData.bio}</p>
             )}
-            {Object.values(profileData.socialLinks).some(link => link) && (
-              <div className="social-links-grid">
-                {profileData.socialLinks.discogs && (
-                  <a
-                    href={profileData.socialLinks.discogs}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="social-link"
-                  >
-                    Discogs
-                  </a>
-                )}
-                {profileData.socialLinks.vinylVault && (
-                  <a
-                    href={profileData.socialLinks.vinylVault}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="social-link"
-                  >
-                    Vinyl Vault
-                  </a>
-                )}
-                {profileData.socialLinks.lastFm && (
-                  <a
-                    href={profileData.socialLinks.lastFm}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="social-link"
-                  >
-                    Last.fm
-                  </a>
-                )}
-              </div>
-            )}
           </div>
         )}
       </section>
@@ -275,7 +302,7 @@ export default function ProfilePage({ user }) {
             <div className="spotify-status connected">
               <span>✓ Spotify Connected</span>
               <button
-                onClick={handleDisconnect}
+                onClick={handleDisconnectSpotify}
                 className="disconnect-btn"
               >
                 Disconnect Spotify

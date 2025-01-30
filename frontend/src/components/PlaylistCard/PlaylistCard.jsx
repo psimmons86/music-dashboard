@@ -3,22 +3,30 @@ import * as playlistService from '../../services/playlistService';
 import { Card, CardContent } from '@/components/ui/card';
 import { Loader2, Music } from 'lucide-react';
 
-export default function SpotifyPlayer() {
-  const [playlistEmbedUrl, setPlaylistEmbedUrl] = useState(null);
+export default function PlaylistCard({ 
+  title = 'Generate Playlist', 
+  actionButtonText = 'Create Playlist',
+  loadingText = 'Generating...',
+  onPlaylistCreated 
+}) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [playlist, setPlaylist] = useState(null);
 
   async function handleCreatePlaylist() {
     try {
-      setLoading(true);
       setError('');
+      setLoading(true);
+
       const response = await playlistService.create();
       
-      if (response?.embedUrl) {
-        setPlaylistEmbedUrl(response.embedUrl);
+      if (response?.url || response?.embedUrl) {
+        setPlaylist(response);
+        onPlaylistCreated?.(response);
       }
     } catch (err) {
-      console.error('Error creating playlist:', err);
+      console.error('Playlist creation error:', err);
+      
       if (err.message?.includes('reconnect')) {
         setError('Please reconnect your Spotify account');
       } else {
@@ -38,10 +46,10 @@ export default function SpotifyPlayer() {
           </div>
         )}
 
-        {playlistEmbedUrl ? (
+        {playlist && playlist.embedUrl ? (
           <div className="w-full aspect-square">
             <iframe
-              src={playlistEmbedUrl}
+              src={playlist.embedUrl}
               width="100%"
               height="100%"
               frameBorder="0"
@@ -60,7 +68,7 @@ export default function SpotifyPlayer() {
               className="px-4 py-2 bg-emerald-500 text-white rounded-lg hover:bg-emerald-600 disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center space-x-2"
             >
               {loading && <Loader2 className="w-4 h-4 animate-spin" />}
-              <span>{loading ? 'Generating Daily Mix...' : 'Generate Daily Mix'}</span>
+              <span>{loading ? loadingText : actionButtonText}</span>
             </button>
           </div>
         )}

@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Link } from 'react-router';
 import NewsFeed from '../../components/NewsFeed/NewsFeed';
-import PlaylistGenerator from '../../components/PlaylistGenerator/PlaylistGenerator';
+import PlaylistCard from '../../components/PlaylistCard/PlaylistCard';
 import './HomePage.css';
 
 export default function HomePage() {
