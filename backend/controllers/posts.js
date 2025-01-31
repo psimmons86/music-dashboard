@@ -1,31 +1,36 @@
 const Post = require('../models/post');
 
 async function index(req, res) {
-  const posts = await Post.find({})
-    .populate('user')
-    .sort('-createdAt');
-  res.json(posts);
+  try {
+    const posts = await Post.find({})
+      .populate('user')
+      .populate('likes')
+      .sort('-createdAt');
+    res.json(posts);
+  } catch (err) {
+    res.status(500).json({ message: 'Failed to fetch posts' });
+  }
 }
 
 async function create(req, res) {
   try {
-    req.body.user = req.user._id;
     const post = await Post.create({
       content: req.body.content,
       currentSong: req.body.currentSong,
-      user: req.user._id
+      user: req.user._id,
+      likes: []
     });
+
     const populatedPost = await post.populate('user');
     res.json(populatedPost);
   } catch (err) {
-    console.log(err);
-    res.status(400).json({ message: 'Create Post Failed' });
+    res.status(400).json({ message: 'Failed to create post' });
   }
 }
 
 async function deletePost(req, res) {
   try {
-    const post = await Post.findOne({
+    const post = await Post.findOneAndDelete({
       _id: req.params.id,
       user: req.user._id
     });
@@ -34,11 +39,9 @@ async function deletePost(req, res) {
       return res.status(404).json({ message: 'Post not found or unauthorized' });
     }
 
-    await post.deleteOne();
-    res.json({ message: 'Post deleted successfully' });
+    res.json({ message: 'Post deleted successfully', postId: post._id });
   } catch (err) {
-    console.error('Delete post error:', err);
-    res.status(400).json({ message: 'Delete Post Failed' });
+    res.status(400).json({ message: 'Failed to delete post' });
   }
 }
 
@@ -51,19 +54,28 @@ async function likePost(req, res) {
     }
 
     const userId = req.user._id;
-    const isLiked = post.likes.includes(userId);
+    const likeIndex = post.likes.indexOf(userId);
+    const wasLiked = likeIndex > -1;
 
-    if (isLiked) {
-      post.likes.pull(userId);
+    if (wasLiked) {
+      post.likes.splice(likeIndex, 1);
     } else {
       post.likes.push(userId);
     }
 
     await post.save();
-    res.json({ isLiked: !isLiked, likeCount: post.likes.length });
+    
+    const updatedPost = await Post.findById(post._id)
+      .populate('user')
+      .populate('likes');
+
+    res.json({
+      isLiked: !wasLiked,
+      likeCount: updatedPost.likes.length,
+      post: updatedPost
+    });
   } catch (err) {
-    console.error('Like post error:', err);
-    res.status(500).json({ message: 'Like Post Failed' });
+    res.status(500).json({ message: 'Failed to update like' });
   }
 }
 

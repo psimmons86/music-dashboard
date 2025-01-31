@@ -136,7 +136,7 @@ export default function DashboardPage({ spotifyStatus, onSpotifyUpdate }) {
             isDraggable={true}
             isResizable={true}
             margin={[16, 16]}
-            draggableHandle=".drag-handle" // Only allow dragging by header
+            draggableHandle=".drag-handle"
             onDragStart={handleDragStart}
             onDragStop={handleDragStop}
           >

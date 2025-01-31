@@ -1,7 +1,67 @@
 const SpotifyWebApi = require('spotify-web-api-node');
 const User = require('../models/user');
 
+// Existing createPlaylist function
 async function createPlaylist(req, res) {
+  try {
+    const user = await User.findById(req.user._id);
+    if (!user?.spotifyAccessToken) {
+      return res.status(401).json({ error: 'No Spotify connection found' });
+    }
+
+    const spotifyApi = new SpotifyWebApi({
+      clientId: process.env.SPOTIFY_CLIENT_ID,
+      clientSecret: process.env.SPOTIFY_CLIENT_SECRET,
+      accessToken: user.spotifyAccessToken
+    });
+
+    const me = await spotifyApi.getMe();
+    const savedTracks = await spotifyApi.getMySavedTracks({ limit: 50 });
+    
+    if (!savedTracks.body.items.length) {
+      return res.status(400).json({ 
+        error: 'No saved tracks found. Save some tracks on Spotify first!' 
+      });
+    }
+
+    const shuffledTracks = savedTracks.body.items
+      .sort(() => 0.5 - Math.random())
+      .slice(0, 20);
+
+    const playlistName = `Daily Mix - ${new Date().toLocaleDateString()}`;
+    const playlist = await spotifyApi.createPlaylist(me.body.id, {
+      name: playlistName,
+      description: 'Your daily mix of favorite tracks',
+      public: false
+    });
+
+    const trackUris = shuffledTracks.map(item => item.track.uri);
+    await spotifyApi.addTracksToPlaylist(playlist.body.id, trackUris);
+
+    return res.json({
+      id: playlist.body.id,
+      name: playlist.body.name,
+      url: playlist.body.external_urls.spotify,
+      embedUrl: `https://open.spotify.com/embed/playlist/${playlist.body.id}`,
+      trackCount: trackUris.length
+    });
+
+  } catch (error) {
+    console.error('Playlist creation error:', error);
+    if (error.statusCode === 401) {
+      return res.status(401).json({ 
+        error: 'Please reconnect your Spotify account',
+        reconnectRequired: true 
+      });
+    }
+    res.status(500).json({ 
+      error: 'Failed to create playlist',
+      details: error.message
+    });
+  }
+}
+
+async function getUserStats(req, res) {
   try {
     // Get user and check Spotify connection
     const user = await User.findById(req.user._id);
@@ -17,46 +77,59 @@ async function createPlaylist(req, res) {
     });
 
     try {
-      // Get user profile
-      const me = await spotifyApi.getMe();
-      
-      // Fetch user's saved tracks
-      const savedTracks = await spotifyApi.getMySavedTracks({ limit: 50 });
-      
-      if (!savedTracks.body.items.length) {
-        return res.status(400).json({ 
-          error: 'No saved tracks found. Save some tracks on Spotify first!' 
-        });
-      }
+      // Get user's top items
+      const [topArtists, topTracks] = await Promise.all([
+        spotifyApi.getMyTopArtists({ limit: 5, time_range: 'short_term' }),
+        spotifyApi.getMyTopTracks({ limit: 20, time_range: 'short_term' })
+      ]);
 
-      // Shuffle tracks and take 20
-      const shuffledTracks = savedTracks.body.items
-        .sort(() => 0.5 - Math.random())
-        .slice(0, 20);
+      // Process top artists
+      const processedArtists = topArtists.body.items.map(artist => ({
+        name: artist.name,
+        id: artist.id,
+        popularity: artist.popularity
+      }));
 
-      // Create playlist with today's date
-      const playlistName = `Daily Mix - ${new Date().toLocaleDateString()}`;
-      const playlist = await spotifyApi.createPlaylist(me.body.id, {
-        name: playlistName,
-        description: 'Your daily mix of favorite tracks',
-        public: false
+      // Process albums from top tracks
+      const albumsMap = new Map();
+      topTracks.body.items.forEach(track => {
+        const album = track.album;
+        if (!albumsMap.has(album.id)) {
+          albumsMap.set(album.id, {
+            name: album.name,
+            id: album.id,
+            count: 1
+          });
+        } else {
+          albumsMap.get(album.id).count++;
+        }
       });
 
-      // Add tracks to playlist
-      const trackUris = shuffledTracks.map(item => item.track.uri);
-      await spotifyApi.addTracksToPlaylist(playlist.body.id, trackUris);
+      const processedAlbums = Array.from(albumsMap.values())
+        .sort((a, b) => b.count - a.count)
+        .slice(0, 5);
 
-      // Return playlist details
-      return res.json({
-        id: playlist.body.id,
-        name: playlist.body.name,
-        url: playlist.body.external_urls.spotify,
-        embedUrl: `https://open.spotify.com/embed/playlist/${playlist.body.id}`,
-        trackCount: trackUris.length
+      // Process genres from top artists
+      const genresMap = new Map();
+      topArtists.body.items.forEach(artist => {
+        artist.genres.forEach(genre => {
+          genresMap.set(genre, (genresMap.get(genre) || 0) + 1);
+        });
+      });
+
+      const processedGenres = Array.from(genresMap.entries())
+        .map(([name, count]) => ({ name, count }))
+        .sort((a, b) => b.count - a.count)
+        .slice(0, 5);
+
+      res.json({
+        topArtists: processedArtists,
+        topAlbums: processedAlbums,
+        topGenres: processedGenres
       });
 
     } catch (spotifyError) {
-      console.error('Spotify playlist creation error:', spotifyError);
+      console.error('Spotify API error:', spotifyError);
       
       // Handle token expiration
       if (spotifyError.statusCode === 401) {
@@ -75,12 +148,15 @@ async function createPlaylist(req, res) {
     }
 
   } catch (error) {
-    console.error('Playlist creation error:', error);
+    console.error('Get user stats error:', error);
     res.status(500).json({ 
-      error: 'Failed to create playlist',
+      error: 'Failed to fetch user statistics',
       details: error.message
     });
   }
 }
 
-module.exports = { createPlaylist };
+module.exports = {
+  createPlaylist,
+  getUserStats
+};

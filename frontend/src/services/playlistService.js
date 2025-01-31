@@ -19,3 +19,17 @@ export async function create() {
     throw error;
   }
 }
+
+export async function getUserStats() {
+  try {
+    return await sendRequest(`${BASE_URL}/stats`, 'GET');
+  } catch (error) {
+    console.error('Failed to fetch user stats:', error);
+    // Return empty stats on error
+    return {
+      topArtists: [],
+      topAlbums: [],
+      topGenres: []
+    };
+  }
+}

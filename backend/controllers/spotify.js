@@ -11,6 +11,7 @@ const REQUIRED_SCOPES = [
   'user-library-read',
   'playlist-modify-private',
   'playlist-modify-public',
+  'user-top-read',
 ].join(' ');
 
 // Standalone refresh token function

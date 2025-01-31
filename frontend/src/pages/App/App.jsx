@@ -22,7 +22,20 @@ import BlogEditPage from '../BlogEditPage/BlogEditPage';
 export default function App() {
   const location = useLocation();
 
-  const [user, setUser] = useState(null); 
+  const [user, setUser] = useState(() => {
+    const token = localStorage.getItem('token');
+    const userStr = localStorage.getItem('user');
+    if (token && userStr) {
+      try {
+        return JSON.parse(userStr);
+      } catch (err) {
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        return null;
+      }
+    }
+    return null;
+  });
 
   const [spotifyStatus, setSpotifyStatus] = useState({ 
     connected: false,
@@ -59,6 +72,17 @@ export default function App() {
       checkSpotifyStatus();
     }
   }, [user]);
+
+  // Enhanced setUser function to handle localStorage
+  const handleSetUser = (userData) => {
+    if (userData) {
+      localStorage.setItem('user', JSON.stringify(userData));
+    } else {
+      localStorage.removeItem('user');
+    }
+    setUser(userData);
+  };
+
   const requireAuth = (element) => {
     if (!user) {
       return <Navigate to="/login" state={{ from: location.pathname }} replace />;
@@ -68,7 +92,7 @@ export default function App() {
 
   return (
     <main className="App">
-      <NavBar user={user} setUser={setUser} />
+      <NavBar user={user} setUser={handleSetUser} />
       
       <Routes>
         {/* Public Routes */}
@@ -77,7 +101,7 @@ export default function App() {
         <Route 
           path="/signup" 
           element={
-            !user ? <SignUpPage setUser={setUser} /> : <Navigate to="/dashboard" replace />
+            !user ? <SignUpPage setUser={handleSetUser} /> : <Navigate to="/dashboard" replace />
           } 
         />
         
@@ -85,7 +109,7 @@ export default function App() {
           path="/login" 
           element={
             !user ? (
-              <LogInPage setUser={setUser} />
+              <LogInPage setUser={handleSetUser} />
             ) : (
               <Navigate to={location.state?.from || '/dashboard'} replace />
             )
@@ -100,6 +124,7 @@ export default function App() {
               <DashboardPage 
                 spotifyStatus={spotifyStatus}
                 onSpotifyUpdate={checkSpotifyStatus}
+                user={user}
               />
             )
           }

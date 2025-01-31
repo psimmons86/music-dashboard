@@ -47,22 +47,15 @@ export function getUser() {
   }
 }
 
-export async function logIn(credentials, redirectUrl = '/dashboard') {
-  try {
-    const response = await sendRequest(`${BASE_URL}/login`, 'POST', credentials);
-    
-    if (response.token) {
-      localStorage.setItem('token', response.token);
-      if (redirectUrl && redirectUrl !== '/login') {
-        localStorage.setItem('redirectUrl', redirectUrl);
-      }
-    }
-    
-    return response.user;
-  } catch (err) {
-    console.error('Login error:', err);
-    throw new Error(err.message || 'Login failed');
+export async function logIn(credentials) {
+  const response = await sendRequest(`${BASE_URL}/login`, 'POST', credentials);
+  
+  if (response.token) {
+    localStorage.setItem('token', response.token);
+    localStorage.setItem('user', JSON.stringify(response.user)); // Make sure this line exists
   }
+  
+  return response.user;
 }
 
 export function logOut(redirectUrl = '/login') {

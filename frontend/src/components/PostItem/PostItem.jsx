@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Music, Heart, Trash2, Loader2 } from 'lucide-react';
+import { Heart, Trash2, Loader2, Music } from 'lucide-react';
 import * as postService from '../../services/postService';
 
 export default function PostItem({ post, onDelete }) {
@@ -7,37 +7,43 @@ export default function PostItem({ post, onDelete }) {
   const [likeCount, setLikeCount] = useState(0);
   const [isDeleting, setIsDeleting] = useState(false);
   const [error, setError] = useState('');
+  const [userData, setUserData] = useState(null);
 
-  // Parse user from localStorage
-  const currentUser = (() => {
-    try {
-      return JSON.parse(localStorage.getItem('user'));
-    } catch {
-      return null;
-    }
-  })();
-
-  // Initialize like state
   useEffect(() => {
-    if (post?.likes) {
-      setLikeCount(post.likes.length);
-      setIsLiked(currentUser && post.likes.includes(currentUser._id));
+    // Get token and user data
+    const token = localStorage.getItem('token');
+    const userStr = localStorage.getItem('user');
+
+    if (token && userStr) {
+      try {
+        const user = JSON.parse(userStr);
+        setUserData(user);
+      } catch (err) {
+        console.error('Error parsing user data:', err);
+      }
     }
-  }, [post?.likes, currentUser]);
+  }, []);
+
+  useEffect(() => {
+    if (post?.likes && userData) {
+      setLikeCount(post.likes.length);
+      setIsLiked(post.likes.includes(userData._id));
+    }
+  }, [post?.likes, userData]);
 
   const handleLikeClick = async (e) => {
     e.preventDefault();
     e.stopPropagation();
     
-    if (!currentUser) {
+    // Check for token first
+    const token = localStorage.getItem('token');
+    if (!token) {
       setError('Please log in to like posts');
       return;
     }
 
     try {
-      console.log('Attempting to like post:', post._id); // Debug log
       const response = await postService.likePost(post._id);
-      console.log('Like response:', response); // Debug log
       
       if (response) {
         setIsLiked(response.isLiked);
@@ -53,12 +59,13 @@ export default function PostItem({ post, onDelete }) {
     e.preventDefault();
     e.stopPropagation();
 
-    if (!currentUser) {
+    const token = localStorage.getItem('token');
+    if (!token) {
       setError('Please log in to delete posts');
       return;
     }
 
-    if (currentUser._id !== post.user._id) {
+    if (userData?._id !== post.user._id) {
       setError('You can only delete your own posts');
       return;
     }
@@ -69,8 +76,8 @@ export default function PostItem({ post, onDelete }) {
 
     try {
       setIsDeleting(true);
-      console.log('Attempting to delete post:', post._id); // Debug log
-      await onDelete(post._id);
+      await postService.deletePost(post._id);
+      onDelete(post._id);
     } catch (err) {
       console.error('Delete error:', err);
       setError('Failed to delete post');
@@ -78,7 +85,6 @@ export default function PostItem({ post, onDelete }) {
     }
   };
 
-  // Clear error after 3 seconds
   useEffect(() => {
     if (error) {
       const timer = setTimeout(() => setError(''), 3000);
@@ -113,7 +119,6 @@ export default function PostItem({ post, onDelete }) {
 
         <div className="flex items-center gap-2">
           <button
-            type="button"
             onClick={handleLikeClick}
             className={`relative z-10 flex items-center gap-1 px-3 py-1 rounded-full transition-colors 
               ${isLiked ? 'text-red-500 bg-red-50' : 'text-gray-500 hover:bg-gray-50'}`}
@@ -125,9 +130,8 @@ export default function PostItem({ post, onDelete }) {
             <span className="text-sm">{likeCount}</span>
           </button>
 
-          {currentUser?._id === post.user._id && (
+          {userData?._id === post.user._id && (
             <button
-              type="button"
               onClick={handleDeleteClick}
               disabled={isDeleting}
               className="relative z-10 text-gray-400 hover:text-red-500 transition-colors p-2 
