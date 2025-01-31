@@ -8,12 +8,11 @@ const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
 
-
-const uploadDir = path.join(__dirname, '../uploads/blog-images');
+// Configure uploads directory
+const uploadDir = path.join(__dirname, '../public/uploads/blog-images');
 if (!fs.existsSync(uploadDir)) {
   fs.mkdirSync(uploadDir, { recursive: true });
 }
-
 
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
@@ -40,30 +39,22 @@ const upload = multer({
   }
 });
 
-
-router.get('/', blogController.getAll);
+// Public routes
+router.get('/user/posts', blogController.getUserBlogs);
 router.get('/:id', blogController.getOne);
+router.get('/', blogController.getAll);
 
-
+// Apply auth middleware to protected routes
 router.use(checkToken);
 router.use(ensureLoggedIn);
 
-
-router.get('/user/posts', blogController.getUserBlogs);
-
-
+// Admin-only routes
 router.use(ensureAdmin);
 
-
+// Create blog route
 router.post('/', upload.single('image'), blogController.create);
 
-
-router.put('/:id', upload.single('image'), blogController.update);
-
-
-router.delete('/:id', blogController.delete);
-
-
+// Upload image route for rich text editor
 router.post('/upload-image', upload.single('image'), async (req, res) => {
   try {
     if (!req.file) {
@@ -77,5 +68,9 @@ router.post('/upload-image', upload.single('image'), async (req, res) => {
     res.status(500).json({ error: 'Failed to upload image' });
   }
 });
+
+// Update and delete routes
+router.put('/:id', upload.single('image'), blogController.update);
+router.delete('/:id', blogController.delete);
 
 module.exports = router;

@@ -1,31 +1,39 @@
-import { createContext, useContext, useState, useEffect } from 'react';
-import { getUser } from '../services/authService';
+import React, { 
+    createContext, 
+    useContext, 
+    useState, 
+    useMemo 
+  } from 'react';
+  import { getUser } from '../services/authService';
+  
 
-const AuthContext = createContext();
+  const AuthContext = createContext(null);
+  
 
-export function AuthProvider({ children }) {
-  const [user, setUser] = useState(getUser());
-  const [isAdmin, setIsAdmin] = useState(false);
+  export const AuthProvider = ({ children }) => {
+    const [user, setUser] = useState(getUser());
+  
 
-  useEffect(() => {
-    if (user) {
-      setIsAdmin(user.isAdmin === true);
-    } else {
-      setIsAdmin(false);
+    const value = useMemo(() => ({
+      user,
+      setUser,
+      isAdmin: user?.role === 'admin'
+    }), [user]);
+  
+    return (
+      <AuthContext.Provider value={value}>
+        {children}
+      </AuthContext.Provider>
+    );
+  };
+  
+
+  export const useAuth = () => {
+    const context = useContext(AuthContext);
+    
+    if (context === null) {
+      throw new Error('useAuth must be used within an AuthProvider');
     }
-  }, [user]);
-
-  return (
-    <AuthContext.Provider value={{ user, setUser, isAdmin }}>
-      {children}
-    </AuthContext.Provider>
-  );
-}
-
-export function useAuth() {
-  const context = useContext(AuthContext);
-  if (context === undefined) {
-    throw new Error('useAuth must be used within an AuthProvider');
-  }
-  return context;
-}
+    
+    return context;
+  };

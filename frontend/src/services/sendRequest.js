@@ -23,14 +23,25 @@ export default async function sendRequest(url, method = 'GET', payload = null) {
 
     const res = await fetch(url, options);
     
+    if (res.status === 503) {
+      throw new Error('Service is currently unavailable. Please try again later.');
+    }
+    
     if (res.status === 204) return null;
     
-    const json = await res.json().catch(() => {
+    let json;
+    try {
+      json = await res.json();
+    } catch (parseError) {
       throw new Error('Invalid response format from server');
-    });
+    }
     
     if (!res.ok) {
-      const error = new Error(json.error || json.message || 'Request failed');
+      const error = new Error(
+        json.message || 
+        json.error || 
+        'Request failed'
+      );
       error.status = res.status;
       error.details = json;
       throw error;
@@ -40,13 +51,12 @@ export default async function sendRequest(url, method = 'GET', payload = null) {
   } catch (error) {
     console.error('Request error:', error);
     
+
     if (error.status === 401) {
       localStorage.removeItem('token');
       window.location.href = '/login';
     }
     
-    throw error instanceof Error 
-      ? error 
-      : new Error(JSON.stringify(error));
+    throw error;
   }
 }

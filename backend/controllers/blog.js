@@ -1,4 +1,21 @@
 const Blog = require('../models/blog');
+const path = require('path');
+const fs = require('fs');
+
+// Create upload directories
+const createUploadDirs = () => {
+  const uploadsDir = path.join(__dirname, '../public/uploads');
+  const blogImagesDir = path.join(uploadsDir, 'blog-images');
+  
+  if (!fs.existsSync(uploadsDir)) {
+    fs.mkdirSync(uploadsDir, { recursive: true });
+  }
+  if (!fs.existsSync(blogImagesDir)) {
+    fs.mkdirSync(blogImagesDir, { recursive: true });
+  }
+};
+
+createUploadDirs();
 
 const blogController = {
   async create(req, res) {
@@ -30,9 +47,8 @@ const blogController = {
 
       if (req.file) {
         blogData.image = `/uploads/blog-images/${req.file.filename}`;
+        console.log('Image path set to:', blogData.image);
       }
-
-      const blog = new Blog(blogData);
 
       if (req.body.isDraft && req.body.previousDraftId) {
         const previousDraft = await Blog.findOne({
@@ -49,8 +65,13 @@ const blogController = {
         }
       }
 
+      const blog = new Blog(blogData);
       await blog.save();
-      res.status(201).json(blog);
+      
+      const populatedBlog = await Blog.findById(blog._id)
+        .populate('author', 'name');
+      
+      res.status(201).json(populatedBlog);
     } catch (error) {
       console.error('Create blog error:', error);
       res.status(400).json({ error: error.message });
@@ -139,11 +160,27 @@ const blogController = {
       }
 
       if (req.file) {
-        blogData.image = `/uploads/blog-images/${req.file.filename}`;
+        if (blog.image) {
+          const oldImagePath = path.join(__dirname, '../public', blog.image);
+          try {
+            if (fs.existsSync(oldImagePath)) {
+              fs.unlinkSync(oldImagePath);
+            }
+          } catch (e) {
+            console.error('Error deleting old image:', e);
+          }
+        }
+        
+        blog.image = `/uploads/blog-images/${req.file.filename}`;
+        console.log('Updated image path:', blog.image);
       }
 
       await blog.save();
-      res.json(blog);
+      
+      const updatedBlog = await Blog.findById(blog._id)
+        .populate('author', 'name');
+      
+      res.json(updatedBlog);
     } catch (error) {
       console.error('Update blog error:', error);
       res.status(400).json({ error: error.message });
@@ -159,6 +196,17 @@ const blogController = {
 
       if (!blog) {
         return res.status(404).json({ error: 'Blog post not found or unauthorized' });
+      }
+
+      if (blog.image) {
+        const imagePath = path.join(__dirname, '../public', blog.image);
+        try {
+          if (fs.existsSync(imagePath)) {
+            fs.unlinkSync(imagePath);
+          }
+        } catch (e) {
+          console.error('Error deleting image file:', e);
+        }
       }
 
       res.json({ message: 'Blog post deleted successfully' });
