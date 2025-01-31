@@ -112,16 +112,16 @@ export default function BlogCreatePage() {
     try {
       setError('');
       if (!validateForm()) return;
-
+  
       setIsSubmitting(true);
-      console.log('Publishing blog with data:', formData);
-
+  
       const blogData = {
         ...formData,
         status: 'published',
-        tags: formData.tags.split(',').map(tag => tag.trim()).filter(Boolean)
+        tags: formData.tags.split(',').map(tag => tag.trim()).filter(Boolean),
+        image: formData.image
       };
-
+  
       await blogService.createBlog(blogData);
       localStorage.removeItem('blogDraft');
       navigate('/blog');

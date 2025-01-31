@@ -139,7 +139,7 @@ const blogController = {
       }
 
       if (req.file) {
-        blog.image = `/uploads/blog-images/${req.file.filename}`;
+        blogData.image = `/uploads/blog-images/${req.file.filename}`;
       }
 
       await blog.save();

@@ -93,33 +93,42 @@ function MenuBar({ editor }) {
         title="Add Link"
       />
       <label className="p-2 rounded hover:bg-gray-100 cursor-pointer flex items-center">
-        <ImageIcon size={18} />
-        <input
-          type="file"
-          className="hidden"
-          accept="image/*"
-          onChange={async (e) => {
-            const file = e.target.files?.[0];
-            if (file) {
-              const formData = new FormData();
-              formData.append('image', file);
-              try {
-                const response = await fetch('/api/blog/upload-image', {
-                  method: 'POST',
-                  body: formData,
-                  headers: {
-                    'Authorization': `Bearer ${localStorage.getItem('token')}`
-                  }
-                });
-                const data = await response.json();
-                editor.chain().focus().setImage({ src: data.url }).run();
-              } catch (error) {
-                console.error('Failed to upload image:', error);
-              }
+  <ImageIcon size={18} />
+  <input
+    type="file"
+    className="hidden"
+    accept="image/*"
+    onChange={async (e) => {
+      const file = e.target.files?.[0];
+      if (file) {
+        const formData = new FormData();
+        formData.append('image', file);
+        try {
+          const response = await fetch('/api/blog/upload-image', {
+            method: 'POST',
+            body: formData,
+            headers: {
+              'Authorization': `Bearer ${localStorage.getItem('token')}`
             }
-          }}
-        />
-      </label>
+          });
+          if (!response.ok) {
+            throw new Error('Failed to upload image');
+          }
+          const data = await response.json();
+          if (!data.url) {
+            throw new Error('Invalid response from server');
+          }
+          // Ensure the URL is absolute
+          const imageUrl = data.url.startsWith('http') ? data.url : `${window.location.origin}${data.url}`;
+          editor.chain().focus().setImage({ src: imageUrl }).run();
+        } catch (error) {
+          console.error('Failed to upload image:', error);
+          alert('Failed to upload image. Please try again.');
+        }
+      }
+    }}
+  />
+</label>
       <MenuButton
         onClick={() => editor.chain().focus().undo().run()}
         disabled={!editor.can().chain().focus().undo().run()}
@@ -140,7 +149,13 @@ function RichTextEditor({ content, onChange }) {
   const editor = useEditor({
     extensions: [
       StarterKit,
-      Image,
+      Image.configure({
+        inline: true,
+        allowBase64: true,
+        HTMLAttributes: {
+          class: 'blog-image',
+        },
+      }),
       Link.configure({
         openOnClick: false,
       }),

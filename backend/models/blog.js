@@ -16,10 +16,16 @@ const blogSchema = new Schema({
     ref: 'User',
     required: true
   },
+  isAdmin: {
+    type: Boolean,
+    default: function() {
+      return false;
+    }
+  },
   category: {
     type: String,
     required: true,
-    enum: ['Music News', 'Artist Spotlight', 'Industry Trends', 'Reviews', 'Tutorials']
+    enum: ['Music News', 'Artist Spotlight', 'Features', 'Reviews', 'Tutorials']
   },
   tags: [{
     type: String,
@@ -48,6 +54,19 @@ const blogSchema = new Schema({
   }]
 }, {
   timestamps: true
+});
+
+blogSchema.pre('save', async function(next) {
+  if (this.isNew || this.isModified('author')) {
+    try {
+      const User = mongoose.model('User');
+      const author = await User.findById(this.author);
+      this.isAdmin = author?.role === 'admin';
+    } catch (error) {
+      console.error('Error setting isAdmin flag:', error);
+    }
+  }
+  next();
 });
 
 module.exports = mongoose.model('Blog', blogSchema);
