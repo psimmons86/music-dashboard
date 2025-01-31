@@ -17,7 +17,12 @@ if (!fs.existsSync(publicDir)) {
 
 // Basic middleware
 app.use(logger('dev'));
-app.use(cors());
+app.use(cors({
+  origin: process.env.FRONTEND_URL || 'http://localhost:5173',
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+}));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
@@ -29,18 +34,20 @@ app.use('/uploads', express.static(path.join(__dirname, 'public/uploads')));
 app.use('/api/auth', require('./routes/auth'));
 app.use('/api/news', require('./routes/news'));
 
-// Spotify routes - keep all Spotify routes together
-app.use('/api/spotify', require('./routes/spotify'));
+// Spotify auth routes (for initial connection)
+app.use('/api/spotify/connect', require('./routes/spotify'));
+app.use('/api/spotify/callback', require('./routes/spotify'));
 
 // Auth middleware for protected routes
 app.use('/api', require('./middleware/checkToken'));
 app.use('/api', require('./middleware/ensureLoggedIn'));
 
-// Protected routes (auth required)
+// Protected routes (just need to be logged in)
 app.use('/api/blog', require('./routes/blog'));
 app.use('/api/articles', require('./routes/articles'));
 app.use('/api/user', require('./routes/user'));
 app.use('/api/posts', require('./routes/posts'));
+app.use('/api/spotify', require('./routes/spotify'));
 app.use('/api/playlist', require('./routes/playlist'));
 app.use('/api/weekly-playlist', require('./routes/weeklyPlaylist'));
 

@@ -163,6 +163,13 @@ const authController = {
   // Update User Role (Admin only)
   async updateRole(req, res) {
     try {
+      // Check if the requesting user is an admin
+      if (req.user.role !== 'admin') {
+        return res.status(403).json({ 
+          message: 'Unauthorized: Admin access required' 
+        });
+      }
+
       const { userId, role, secretKey } = req.body;
 
       // Validate admin secret key

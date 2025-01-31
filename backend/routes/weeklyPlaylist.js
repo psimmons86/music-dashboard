@@ -2,7 +2,6 @@ const express = require('express');
 const router = express.Router();
 const WeeklyPlaylist = require('../models/weeklyPlaylist');
 const ensureLoggedIn = require('../middleware/ensureLoggedIn');
-const ensureAdmin = require('../middleware/ensureAdmin');
 const checkToken = require('../middleware/checkToken');
 
 // Get current active playlist - public route
@@ -25,10 +24,16 @@ router.get('/current', async (req, res) => {
 // Admin routes
 router.use(checkToken);
 router.use(ensureLoggedIn);
-router.use(ensureAdmin);
 
 // Update weekly playlist (admin only)
 router.post('/update', async (req, res) => {
+  // Check if the user is an admin
+  if (req.user.role !== 'admin') {
+    return res.status(403).json({ 
+      error: 'Unauthorized: Admin access required' 
+    });
+  }
+
   try {
     // Validate required fields
     const { spotifyPlaylistId, embedUrl, title } = req.body;

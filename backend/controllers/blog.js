@@ -12,7 +12,7 @@ const blogController = {
         summary: req.body.summary,
         status: req.body.status || 'draft',
         author: req.user._id,
-        imageUrl: req.body.imageUrl || ''
+        imageUrl: req.body.imageUrl || '',
       };
 
       if (req.body.tags) {
@@ -45,60 +45,11 @@ const blogController = {
       await blog.save();
       
       const populatedBlog = await Blog.findById(blog._id)
-        .populate('author', 'name');
+        .populate('author', 'name role');
       
       res.status(201).json(populatedBlog);
     } catch (error) {
       console.error('Create blog error:', error);
-      res.status(400).json({ error: error.message });
-    }
-  },
-
-  async getAll(req, res) {
-    try {
-      const filter = { status: 'published' };
-      const blogs = await Blog.find(filter)
-        .populate('author', 'name')
-        .sort('-createdAt');
-      res.json(blogs);
-    } catch (error) {
-      console.error('Get blogs error:', error);
-      res.status(400).json({ error: error.message });
-    }
-  },
-
-  async getUserBlogs(req, res) {
-    try {
-      const blogs = await Blog.find({ 
-        author: req.user._id,
-        $or: [{ status: 'published' }, { status: 'draft' }]
-      })
-        .populate('author', 'name')
-        .sort('-createdAt');
-      res.json(blogs);
-    } catch (error) {
-      console.error('Get user blogs error:', error);
-      res.status(400).json({ error: error.message });
-    }
-  },
-
-  async getOne(req, res) {
-    try {
-      const blog = await Blog.findById(req.params.id)
-        .populate('author', 'name');
-      
-      if (!blog) {
-        return res.status(404).json({ error: 'Blog post not found' });
-      }
-
-      if (blog.status === 'published') {
-        blog.viewCount += 1;
-        await blog.save();
-      }
-
-      res.json(blog);
-    } catch (error) {
-      console.error('Get blog error:', error);
       res.status(400).json({ error: error.message });
     }
   },
@@ -113,18 +64,17 @@ const blogController = {
       if (!blog) {
         return res.status(404).json({ error: 'Blog post not found or unauthorized' });
       }
-
       blog.revisions.push({
         content: blog.content,
         updatedAt: new Date()
       });
 
-      if (req.body.title) blog.title = req.body.title;
-      if (req.body.content) blog.content = req.body.content;
-      if (req.body.category) blog.category = req.body.category;
-      if (req.body.summary) blog.summary = req.body.summary;
-      if (req.body.status) blog.status = req.body.status;
-      if (req.body.imageUrl) blog.imageUrl = req.body.imageUrl;
+      const updatableFields = ['title', 'content', 'category', 'summary', 'status', 'imageUrl'];
+      updatableFields.forEach(field => {
+        if (req.body[field] !== undefined) {
+          blog[field] = req.body[field];
+        }
+      });
       
       if (req.body.tags) {
         try {
@@ -139,7 +89,7 @@ const blogController = {
       await blog.save();
       
       const updatedBlog = await Blog.findById(blog._id)
-        .populate('author', 'name');
+        .populate('author', 'name role');
       
       res.json(updatedBlog);
     } catch (error) {
@@ -162,6 +112,55 @@ const blogController = {
       res.json({ message: 'Blog post deleted successfully' });
     } catch (error) {
       console.error('Delete blog error:', error);
+      res.status(400).json({ error: error.message });
+    }
+  },
+
+  async getAll(req, res) {
+    try {
+      const filter = { status: 'published' };
+      const blogs = await Blog.find(filter)
+        .populate('author', 'name role')
+        .sort('-createdAt');
+      res.json(blogs);
+    } catch (error) {
+      console.error('Get blogs error:', error);
+      res.status(400).json({ error: error.message });
+    }
+  },
+
+  async getUserBlogs(req, res) {
+    try {
+      const blogs = await Blog.find({ 
+        author: req.user._id,
+        $or: [{ status: 'published' }, { status: 'draft' }]
+      })
+        .populate('author', 'name role')
+        .sort('-createdAt');
+      res.json(blogs);
+    } catch (error) {
+      console.error('Get user blogs error:', error);
+      res.status(400).json({ error: error.message });
+    }
+  },
+
+  async getOne(req, res) {
+    try {
+      const blog = await Blog.findById(req.params.id)
+        .populate('author', 'name role');
+      
+      if (!blog) {
+        return res.status(404).json({ error: 'Blog post not found' });
+      }
+
+      if (blog.status === 'published') {
+        blog.viewCount += 1;
+        await blog.save();
+      }
+
+      res.json(blog);
+    } catch (error) {
+      console.error('Get blog error:', error);
       res.status(400).json({ error: error.message });
     }
   }
