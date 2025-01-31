@@ -13,25 +13,45 @@ const REQUIRED_SCOPES = [
   'playlist-modify-public',
 ].join(' ');
 
+// Standalone refresh token function
+async function refreshUserToken(user) {
+  try {
+    if (!user.spotifyRefreshToken) {
+      throw new Error('No refresh token available');
+    }
+
+    spotifyApi.setRefreshToken(user.spotifyRefreshToken);
+    const data = await spotifyApi.refreshAccessToken();
+
+    // Update user with new tokens
+    const updatedUser = await User.findByIdAndUpdate(
+      user._id,
+      {
+        spotifyAccessToken: data.body.access_token,
+        spotifyTokenExpiry: new Date(Date.now() + data.body.expires_in * 1000),
+      },
+      { new: true }
+    );
+
+    return updatedUser;
+  } catch (error) {
+    console.error('Error refreshing Spotify token:', error);
+    throw error;
+  }
+}
+
 const spotifyController = {
-  /**
-   * Generates the Spotify authorization URL and returns it.
-   */
   async connect(req, res) {
     try {
-      // Ensure user is authenticated
       if (!req.user) {
         return res.status(401).json({ error: 'You must be logged in to connect Spotify' });
       }
 
-      // Generate state with user ID
       const state = req.user._id.toString();
-
-      // Create authorization URL
       const authorizeURL = spotifyApi.createAuthorizeURL(
         REQUIRED_SCOPES.split(' '),
         state,
-        true // Force user approval
+        true
       );
 
       console.log('Generated Spotify authorize URL:', authorizeURL);
@@ -42,9 +62,6 @@ const spotifyController = {
     }
   },
 
-  /**
-   * Handles the Spotify callback, exchanges the code for tokens, and updates the user.
-   */
   async callback(req, res) {
     try {
       const { code, state } = req.body;
@@ -54,20 +71,16 @@ const spotifyController = {
         return res.status(400).json({ error: 'No authorization code received' });
       }
 
-      // Validate state parameter
       if (!req.user || state !== req.user._id.toString()) {
         return res.status(401).json({ error: 'Invalid state parameter' });
       }
 
-      // Exchange code for tokens
       const data = await spotifyApi.authorizationCodeGrant(code);
       console.log('Received Spotify tokens');
 
-      // Set tokens for getting user profile
       spotifyApi.setAccessToken(data.body.access_token);
       const spotifyUser = await spotifyApi.getMe();
 
-      // Update user with Spotify data
       const updatedUser = await User.findByIdAndUpdate(
         req.user._id,
         {
@@ -93,38 +106,6 @@ const spotifyController = {
     }
   },
 
-  /**
-   * Refreshes the Spotify access token if it's expired.
-   */
-  async refreshToken(user) {
-    try {
-      if (!user.spotifyRefreshToken) {
-        throw new Error('No refresh token available');
-      }
-
-      spotifyApi.setRefreshToken(user.spotifyRefreshToken);
-      const data = await spotifyApi.refreshAccessToken();
-
-      // Update user with new tokens
-      const updatedUser = await User.findByIdAndUpdate(
-        user._id,
-        {
-          spotifyAccessToken: data.body.access_token,
-          spotifyTokenExpiry: new Date(Date.now() + data.body.expires_in * 1000),
-        },
-        { new: true }
-      );
-
-      return updatedUser;
-    } catch (error) {
-      console.error('Error refreshing Spotify token:', error);
-      throw error;
-    }
-  },
-
-  /**
-   * Returns the current Spotify connection status for the logged-in user.
-   */
   async status(req, res) {
     try {
       if (!req.user) {
@@ -137,14 +118,24 @@ const spotifyController = {
       }
 
       // Check if token is expired
-      const isExpired =
-        user.spotifyTokenExpiry && new Date() > new Date(user.spotifyTokenExpiry);
+      const isExpired = user.spotifyTokenExpiry && new Date() > new Date(user.spotifyTokenExpiry);
 
       // Refresh token if expired
       if (isExpired && user.spotifyRefreshToken) {
-        await this.refreshToken(user);
+        try {
+          const updatedUser = await refreshUserToken(user);
+          return res.json({
+            connected: true,
+            userId: updatedUser.spotifyId,
+          });
+        } catch (error) {
+          // If refresh fails, return disconnected status
+          console.error('Token refresh failed:', error);
+          return res.json({ connected: false });
+        }
       }
 
+      // Return connection status
       res.json({
         connected: Boolean(user.spotifyAccessToken && !isExpired),
         userId: user.spotifyId,
@@ -155,9 +146,6 @@ const spotifyController = {
     }
   },
 
-  /**
-   * Disconnects the user from Spotify by clearing their tokens.
-   */
   async disconnect(req, res) {
     try {
       if (!req.user) {

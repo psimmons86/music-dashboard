@@ -1,30 +1,38 @@
 import sendRequest from './sendRequest';
+import { getToken } from './authService';
 
 const BASE_URL = '/api/spotify';
 
-
 export async function connectSpotify() {
   try {
-    console.log('Initiating Spotify connection...');
+    console.log('Frontend: Initiating Spotify connection...');
+    const token = getToken();
+    if (!token) {
+      console.error('Frontend: No auth token available');
+      throw new Error('Authentication required');
+    }
+
     const response = await sendRequest(`${BASE_URL}/connect`);
-    console.log('Spotify connect response:', response);
+    console.log('Frontend: Spotify connect response:', response);
 
     if (!response?.url) {
+      console.error('Frontend: No authorization URL received');
       throw new Error('No authorization URL received');
     }
 
     return response;
   } catch (error) {
-    console.error('Error connecting to Spotify:', error);
+    console.error('Frontend: Error connecting to Spotify:', error);
     throw new Error('Failed to connect to Spotify. Please try again.');
   }
 }
 
 export async function handleSpotifyCallback(code, state) {
   try {
-    console.log('Handling Spotify callback...', { code, state });
+    console.log('Frontend: Handling Spotify callback...', { code, state });
 
     if (!code || !state) {
+      console.error('Frontend: Invalid callback parameters');
       throw new Error('Invalid authorization code or state');
     }
 
@@ -33,35 +41,47 @@ export async function handleSpotifyCallback(code, state) {
       state,
     });
 
-    console.log('Spotify callback response:', response);
+    console.log('Frontend: Spotify callback response:', response);
     return response;
   } catch (error) {
-    console.error('Error handling Spotify callback:', error);
+    console.error('Frontend: Error handling Spotify callback:', error);
     throw new Error('Failed to authenticate with Spotify. Please try again.');
   }
 }
 
 export async function getSpotifyStatus() {
   try {
-    console.log('Checking Spotify status...');
+    console.log('Frontend: Checking Spotify status...');
+    const token = getToken();
+    if (!token) {
+      console.log('Frontend: No auth token, returning disconnected status');
+      return { connected: false };
+    }
+
     const response = await sendRequest(`${BASE_URL}/status`);
-    console.log('Spotify status response:', response);
-    return response;
+    console.log('Frontend: Spotify status response:', response);
+    return {
+      connected: Boolean(response?.connected),
+      userId: response?.userId
+    };
   } catch (error) {
-    console.error('Error checking Spotify status:', error);
-    return { connected: false };
+    console.error('Frontend: Spotify status check error:', error);
+    if (error.status === 401) {
+      console.log('Frontend: Unauthorized, returning disconnected status');
+      return { connected: false };
+    }
+    throw error;
   }
 }
 
-
 export async function disconnectSpotify() {
   try {
-    console.log('Disconnecting from Spotify...');
+    console.log('Frontend: Disconnecting from Spotify...');
     const response = await sendRequest(`${BASE_URL}/disconnect`, 'POST');
-    console.log('Spotify disconnect response:', response);
+    console.log('Frontend: Spotify disconnect response:', response);
     return response;
   } catch (error) {
-    console.error('Error disconnecting from Spotify:', error);
+    console.error('Frontend: Error disconnecting from Spotify:', error);
     throw new Error('Failed to disconnect from Spotify. Please try again.');
   }
 }

@@ -22,10 +22,22 @@ const userSchema = new mongoose.Schema({
     default: 'user'
   },
   // Spotify related fields
-  spotifyAccessToken: String,
-  spotifyRefreshToken: String,
-  spotifyTokenExpiry: Date,
-  spotifyId: String,
+  spotifyAccessToken: { 
+    type: String,
+    default: null
+  },
+  spotifyRefreshToken: { 
+    type: String,
+    default: null
+  },
+  spotifyTokenExpiry: { 
+    type: Date,
+    default: null
+  },
+  spotifyId: { 
+    type: String,
+    default: null
+  },
   
   // Other user fields
   profilePicture: {
@@ -41,7 +53,13 @@ const userSchema = new mongoose.Schema({
     enum: ['Happy', 'Chill', 'Energetic', 'Sad', 'Focused']
   }]
 }, {
-  timestamps: true
+  timestamps: true,
+  toJSON: {
+    transform: function(doc, ret) {
+      delete ret.password;
+      return ret;
+    }
+  }
 });
 
 userSchema.pre('save', async function(next) {
