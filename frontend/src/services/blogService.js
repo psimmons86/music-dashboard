@@ -20,12 +20,16 @@ export function deleteBlog(id) {
 
 export async function createBlog(blogData) {
   try {
+    console.log('Creating blog with data:', blogData);
+
     // Validate required fields upfront
     const requiredFields = ['title', 'content', 'category', 'summary'];
     const missingFields = requiredFields.filter(field => !blogData[field]);
     
     if (missingFields.length > 0) {
-      throw new Error(`Missing required fields: ${missingFields.join(', ')}`);
+      const errorMessage = `Missing required fields: ${missingFields.join(', ')}`;
+      console.error(errorMessage);
+      throw new Error(errorMessage);
     }
 
     // Normalize tags
@@ -48,10 +52,14 @@ export async function createBlog(blogData) {
         }
       });
 
+      console.log('Sending FormData blog post');
       return sendRequest(BASE_URL, 'POST', formData);
     }
 
-    return sendRequest(BASE_URL, 'POST', blogData);
+    console.log('Sending JSON blog post');
+    const response = await sendRequest(BASE_URL, 'POST', blogData);
+    console.log('Blog creation response:', response);
+    return response;
   } catch (error) {
     console.error('Error creating blog:', error);
     throw error;
@@ -60,7 +68,6 @@ export async function createBlog(blogData) {
 
 export async function updateBlog(id, blogData) {
   try {
-    // Normalize tags (same as in createBlog)
     blogData.tags = Array.isArray(blogData.tags) 
       ? blogData.tags.filter(tag => tag)
       : blogData.tags

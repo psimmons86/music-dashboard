@@ -1,20 +1,19 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router';
 import * as spotifyService from '../../services/spotifyService';
 import { Loader2 } from 'lucide-react';
 
 export default function SpotifyConnect() {
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const navigate = useNavigate();
 
   const handleConnect = async () => {
     try {
-      console.log('Starting Spotify connection process...');
       setIsLoading(true);
       setError('');
 
       const response = await spotifyService.connectSpotify();
-      console.log('Spotify connect response:', response);
-      
       if (response?.url) {
         console.log('Redirecting to Spotify auth URL:', response.url);
         window.location.href = response.url;
@@ -32,11 +31,10 @@ export default function SpotifyConnect() {
   return (
     <div className="flex flex-col items-center gap-4 p-4">
       {error && (
-        <div className="w-full text-red-600 text-sm bg-red-50 p-3 rounded-lg border border-red-200">
+        <div className="w-full text-red-600 text-sm bg-red-50 p-3 rounded-lg">
           {error}
         </div>
       )}
-      
       <button
         onClick={handleConnect}
         disabled={isLoading}

@@ -6,6 +6,7 @@ import RichTextEditor from '../../components/RichTextEditor/RichTextEditor';
 const CATEGORIES = [
   'Music News',
   'Artist Spotlight',
+  'General',
   'Reviews',
   'Tutorials'
 ];

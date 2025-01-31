@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router';
 import { Responsive, WidthProvider } from 'react-grid-layout';
 import { Users, Music, FileText, Crown, Newspaper } from 'lucide-react';
-import { useAuth } from '../../contexts/AuthContext';
 import 'react-grid-layout/css/styles.css';
 import 'react-resizable/css/styles.css';
 import './DashboardPage.css';
@@ -23,7 +22,6 @@ import PlaylistCard from '../../components/PlaylistCard/PlaylistCard';
 const ResponsiveGridLayout = WidthProvider(Responsive);
 
 export default function DashboardPage({ spotifyStatus, onSpotifyUpdate }) {
-  const { isAdmin } = useAuth();
   const [posts, setPosts] = useState([]);
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(true);
@@ -123,14 +121,12 @@ export default function DashboardPage({ spotifyStatus, onSpotifyUpdate }) {
                     <Users size={20} />
                     Social Feed
                   </h2>
-                  {isAdmin && (
-                    <Link 
-                      to="/blog/create"
-                      className="text-emerald-600 hover:text-emerald-700 text-sm font-medium"
-                    >
-                      Write Blog Post
-                    </Link>
-                  )}
+                  <Link 
+                    to="/blog/create"
+                    className="text-emerald-600 hover:text-emerald-700 text-sm font-medium"
+                  >
+                    Write Blog Post
+                  </Link>
                 </div>
                 <PostForm onSubmit={handleCreatePost} />
                 <div className="flex-1 overflow-hidden">

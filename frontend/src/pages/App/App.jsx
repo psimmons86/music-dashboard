@@ -1,12 +1,10 @@
 import { useState, useEffect } from 'react';
 import { Routes, Route, Navigate, useLocation } from 'react-router';
 import * as spotifyService from '../../services/spotifyService';
-import { useAuth } from '../../contexts/AuthContext';
 import './App.css';
 
 // Components
 import NavBar from '../../components/NavBar/NavBar';
-import AdminRoute from '../../components/AdminRoute/AdminRoute';
 import SpotifyCallback from '../../components/SpotifyCallback/SpotifyCallback';
 import WeeklyPlaylistAdmin from '../../components/WeeklyPlaylistAdmin/WeeklyPlaylistAdmin';
 
@@ -22,8 +20,10 @@ import BlogCreatePage from '../BlogCreatePage/BlogCreatePage';
 import BlogEditPage from '../BlogEditPage/BlogEditPage';
 
 export default function App() {
-  const { user, setUser } = useAuth();
   const location = useLocation();
+
+  const [user, setUser] = useState(null); 
+
   const [spotifyStatus, setSpotifyStatus] = useState({ 
     connected: false,
     checking: true 
@@ -59,8 +59,6 @@ export default function App() {
       checkSpotifyStatus();
     }
   }, [user]);
-
-  // Handle auth-required routes
   const requireAuth = (element) => {
     if (!user) {
       return <Navigate to="/login" state={{ from: location.pathname }} replace />;
@@ -112,36 +110,17 @@ export default function App() {
           element={requireAuth(<ProfilePage user={user} />)}
         />
 
-        {/* Blog Routes */}
+        {/* Blog Routes - Now Open to Everyone */}
         <Route path="/blog" element={<BlogListPage />} />
-        
-        <Route 
-          path="/blog/create" 
-          element={
-            <AdminRoute>
-              <BlogCreatePage />
-            </AdminRoute>
-          }
-        />
-        
-        <Route 
-          path="/blog/:id/edit" 
-          element={
-            <AdminRoute>
-              <BlogEditPage />
-            </AdminRoute>
-          }
-        />
-        
+        <Route path="/blog/create" element={<BlogCreatePage />} />
+        <Route path="/blog/:id/edit" element={<BlogEditPage />} />
         <Route path="/blog/:id" element={<BlogDetailPage />} />
 
         {/* Admin Routes */}
         <Route 
           path="/admin/weekly-playlist" 
           element={
-            <AdminRoute>
-              <WeeklyPlaylistAdmin />
-            </AdminRoute>
+            requireAuth(<WeeklyPlaylistAdmin />)
           }
         />
 

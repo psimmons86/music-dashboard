@@ -1,90 +1,55 @@
-# Music Dashboard - A Spotify-Integrated Social Music Platform
-![Dashboard Screenshot](https://imgur.com/a/TSoeRCu)
+# Music Dashboard
 
-## Description
-Music Dashboard is a comprehensive web application that combines social networking with music discovery. Users can connect their Spotify accounts to create custom playlists, share their music preferences, and stay updated with the latest music news. The platform features a clean, modern interface with drag-and-drop customizable widgets and real-time social interactions.
+<div style="display: flex; gap: 20px; margin-bottom: 30px">
+ <img src="https://i.imgur.com/0F9g2x2.png" width="400" alt="Dashboard Preview">
+ <img src="https://i.imgur.com/M7aNwJE.png" width="400" alt="Playlist Generator">
+</div>
+
+Full-stack web application for music discovery, playlist generation, and content sharing.
 
 ## Features
-- Spotify Integration
-  - Create personalized daily mix playlists
-  - View listening statistics and favorites
-  - Easy one-click playlist generation
-- Social Features
-  - Share posts with currently playing songs
-  - Like and interact with other users' posts
-  - Create and share music-related blog posts
-- News & Content
-  - Music news feed with genre filtering
-  - Weekly curated playlists
-  - Admin-managed blog content
-- Customizable Dashboard
-  - Drag-and-drop widget layout
-  - Persistent layout saving
-  - Responsive design for all screen sizes
+- Spotify API integration for playlist creation and management
+- Dynamic music news feed with article saving
+- Social posting with music sharing
+- Full blog platform with rich text editor
+- User authentication and profile management
+- Admin dashboard for content moderation
+- Responsive grid-based dashboard layout
 
-## Technical Stack
+## Tech Stack
 ### Frontend
-- React
-- Tailwind CSS
 - React Grid Layout
-- Spotify Web Playback SDK
+- TipTap rich text editor
+- Tailwind CSS
+- Recharts
+- Lucide icons
 
 ### Backend
-- Node.js
-- Express
-- MongoDB
-- JWT Authentication
-
-### APIs
+- Node.js/Express
+- MongoDB/Mongoose
+- JWT authentication
 - Spotify Web API
 - News API
 
-## Getting Started
-1. Clone the repository
-2. Install dependencies:
-   ```bash
-   cd frontend
-   npm install
-   cd ../backend
-   npm install
-   ```
-3. Set up environment variables:
-   ```env
-   MONGODB_URI=your_mongodb_uri
-   SECRET=your_jwt_secret
-   SPOTIFY_CLIENT_ID=your_spotify_client_id
-   SPOTIFY_CLIENT_SECRET=your_spotify_client_secret
-   SPOTIFY_REDIRECT_URI=http://localhost:5173/spotify/callback
-   NEWS_API_KEY=your_news_api_key
-   ```
-4. Start the development servers:
-   ```bash
-   # Backend
-   cd backend
-   npm start
+### Key Libraries
+- SpotifyWebApi-Node
+- Axios
+- bcrypt
 
-   # Frontend
-   cd frontend
-   npm run dev
-   ```
+## Architecture
+- RESTful API architecture
+- JWT-based authentication flow
+- MongoDB schemas for users, posts, articles, playlists
+- Component-based frontend with shared UI library
+- Responsive grid system for customizable layouts
 
-## Future Improvements
-- Real-time chat functionality
-- Music recommendation system
-- Group playlist collaboration
-- Advanced music statistics and analytics
-- Genre-based community features
-- Mobile app version
+## Installation
+```bash
+# Install dependencies
+npm install
 
-## Live Demo
-[Visit Music Dashboard](https://music-dashboard-aed58e43f3b3.herokuapp.com/)
+# Start backend
+npm run server
 
-## Screenshots
-![Social Feed](https://imgur.com/a/TSoeRCu)
-![Music Player](https://imgur.com/a/TSoeRCu)
-![Blog Interface](https://imgur.com/a/TSoeRCu)
-
-## Contact & Support
-For any questions or support needs, please reach out through the following channels:
-- Email: [hadroncollides.@gmail.com]
-
+# Start frontend
+nodemon

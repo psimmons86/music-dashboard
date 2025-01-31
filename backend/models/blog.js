@@ -19,7 +19,7 @@ const blogSchema = new Schema({
   category: {
     type: String,
     required: true,
-    enum: ['Music News', 'Artist Spotlight', 'Industry Trends', 'Reviews', 'Tutorials']
+    enum: ['Music News', 'Artist Spotlight', 'General', 'Reviews', 'Tutorials']
   },
   tags: [{
     type: String,

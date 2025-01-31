@@ -9,7 +9,7 @@ export async function connectSpotify() {
     console.log('Spotify connect response:', response);
     
     if (!response?.url) {
-      throw new Error('No authorization URL received from server');
+      throw new Error('No authorization URL received');
     }
     return response;
   } catch (error) {
@@ -20,17 +20,11 @@ export async function connectSpotify() {
 
 export async function handleSpotifyCallback(code, state) {
   try {
-    console.log('Handling Spotify callback:', { code, state });
-    
-    if (!code) {
-      throw new Error('No authorization code provided');
-    }
-
+    console.log('Handling Spotify callback...', { code, state });
     const response = await sendRequest(`${BASE_URL}/callback`, 'POST', { 
-      code,
-      state
+      code, 
+      state 
     });
-
     console.log('Spotify callback response:', response);
     return response;
   } catch (error) {
