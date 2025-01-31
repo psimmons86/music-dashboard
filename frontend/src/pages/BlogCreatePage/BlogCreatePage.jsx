@@ -1,18 +1,18 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router';
+import { useNavigate, useLocation } from 'react-router';
 import * as blogService from '../../services/blogService';
 import RichTextEditor from '../../components/RichTextEditor/RichTextEditor';
 
 const CATEGORIES = [
   'Music News',
   'Artist Spotlight',
-  'Industry Trends',
   'Reviews',
   'Tutorials'
 ];
 
 export default function BlogCreatePage() {
   const navigate = useNavigate();
+  const location = useLocation();
   const [formData, setFormData] = useState({
     title: '',
     content: '',
@@ -20,8 +20,9 @@ export default function BlogCreatePage() {
     tags: '',
     summary: '',
     status: 'draft',
-    image: null
+    imageUrl: ''
   });
+
   const [error, setError] = useState('');
   const [saveStatus, setSaveStatus] = useState('');
   const [autoSaveEnabled, setAutoSaveEnabled] = useState(true);
@@ -33,29 +34,37 @@ export default function BlogCreatePage() {
       try {
         setFormData(JSON.parse(savedDraft));
       } catch (err) {
-        console.error('Error loading draft:', err);
         localStorage.removeItem('blogDraft');
       }
     }
   }, []);
 
   useEffect(() => {
-    let autosaveInterval;
+    let autoSaveTimer;
+    let statusTimer;
+
     if (autoSaveEnabled && !isSubmitting) {
-      autosaveInterval = setInterval(() => {
+      autoSaveTimer = setTimeout(() => {
         localStorage.setItem('blogDraft', JSON.stringify(formData));
-        setSaveStatus('Draft saved automatically');
-        setTimeout(() => setSaveStatus(''), 2000);
+        setSaveStatus('Draft auto-saved');
+        
+        statusTimer = setTimeout(() => {
+          setSaveStatus('');
+        }, 2000);
       }, 30000);
     }
-    return () => clearInterval(autosaveInterval);
+
+    return () => {
+      clearTimeout(autoSaveTimer);
+      clearTimeout(statusTimer);
+    };
   }, [formData, autoSaveEnabled, isSubmitting]);
 
   const handleChange = (evt) => {
-    const { name, value, files } = evt.target;
+    const { name, value } = evt.target;
     setFormData(prevState => ({
       ...prevState,
-      [name]: files ? files[0] : value
+      [name]: value
     }));
   };
 
@@ -66,24 +75,67 @@ export default function BlogCreatePage() {
     }));
   };
 
-  const validateForm = () => {
-    if (!formData.title?.trim()) {
-      setError('Title is required');
-      return false;
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    
+    try {
+      setError('');
+      setIsSubmitting(true);
+      
+      const requiredFields = {
+        title: 'Title is required',
+        content: 'Content is required',
+        summary: 'Summary is required',
+        category: 'Category is required'
+      };
+
+      for (const [field, message] of Object.entries(requiredFields)) {
+        if (!formData[field]?.trim()) {
+          setError(message);
+          return;
+        }
+      }
+
+      if (formData.content.length < 100) {
+        setError('Content must be at least 100 characters long');
+        return;
+      }
+
+      if (formData.summary.length > 200) {
+        setError('Summary must not exceed 200 characters');
+        return;
+      }
+
+      const blogData = {
+        ...formData,
+        status: 'published',
+        tags: formData.tags
+          .split(',')
+          .map(tag => tag.trim())
+          .filter(Boolean),
+        imageUrl: formData.imageUrl?.trim() || ''
+      };
+
+      await blogService.createBlog(blogData);
+      localStorage.removeItem('blogDraft');
+      setSaveStatus('Blog post published successfully!');
+
+      setTimeout(() => {
+        navigate('/blog');
+      }, 1500);
+
+    } catch (err) {
+      if (err.status === 413) {
+        setError('Image file size is too large. Please use a smaller image.');
+      } else if (err.status === 401) {
+        setError('Your session has expired. Please log in again.');
+        navigate('/login', { state: { from: location.pathname } });
+      } else {
+        setError(err.message || 'Failed to publish blog post. Please try again.');
+      }
+    } finally {
+      setIsSubmitting(false);
     }
-    if (!formData.content?.trim()) {
-      setError('Content is required');
-      return false;
-    }
-    if (!formData.summary?.trim()) {
-      setError('Summary is required');
-      return false;
-    }
-    if (!formData.category) {
-      setError('Category is required');
-      return false;
-    }
-    return true;
   };
 
   const handleSaveDraft = async () => {
@@ -91,43 +143,26 @@ export default function BlogCreatePage() {
       setError('');
       setIsSubmitting(true);
       
-      const blogData = {
+      const draftData = {
         ...formData,
         status: 'draft',
-        tags: formData.tags.split(',').map(tag => tag.trim()).filter(Boolean)
+        tags: formData.tags
+          .split(',')
+          .map(tag => tag.trim())
+          .filter(Boolean),
+        imageUrl: formData.imageUrl?.trim() || ''
       };
 
-      await blogService.createBlog(blogData);
+      await blogService.createBlog(draftData);
+      localStorage.setItem('blogDraft', JSON.stringify(draftData));
       setSaveStatus('Draft saved successfully');
-      setTimeout(() => setSaveStatus(''), 2000);
+
+      setTimeout(() => {
+        setSaveStatus('');
+      }, 3000);
+
     } catch (err) {
       setError(err.message || 'Failed to save draft');
-      console.error('Error saving draft:', err);
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  const handlePublish = async () => {
-    try {
-      setError('');
-      if (!validateForm()) return;
-  
-      setIsSubmitting(true);
-  
-      const blogData = {
-        ...formData,
-        status: 'published',
-        tags: formData.tags.split(',').map(tag => tag.trim()).filter(Boolean),
-        image: formData.image
-      };
-  
-      await blogService.createBlog(blogData);
-      localStorage.removeItem('blogDraft');
-      navigate('/blog');
-    } catch (err) {
-      console.error('Failed to publish blog post:', err);
-      setError(err.message || 'Failed to publish blog post');
     } finally {
       setIsSubmitting(false);
     }
@@ -152,143 +187,139 @@ export default function BlogCreatePage() {
             </div>
           )}
 
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <div className="space-y-6">
-              <div>
-                <label className="block text-gray-700 font-medium mb-2">
-                  Title *
-                </label>
-                <input
-                  type="text"
-                  name="title"
-                  value={formData.title}
-                  onChange={handleChange}
-                  className="w-full p-3 bg-white/60 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#98e4d3] focus:border-transparent"
-                  required
-                  placeholder="Enter your blog post title"
-                  disabled={isSubmitting}
-                />
+          <form onSubmit={handleSubmit} className="space-y-6">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <div className="space-y-6">
+                <div>
+                  <label className="block text-gray-700 font-medium mb-2">
+                    Title *
+                  </label>
+                  <input
+                    type="text"
+                    name="title"
+                    value={formData.title}
+                    onChange={handleChange}
+                    className="w-full p-3 bg-white/60 border border-gray-200 rounded-lg"
+                    disabled={isSubmitting}
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-gray-700 font-medium mb-2">
+                    Category *
+                  </label>
+                  <select
+                    name="category"
+                    value={formData.category}
+                    onChange={handleChange}
+                    className="w-full p-3 bg-white/60 border border-gray-200 rounded-lg"
+                    disabled={isSubmitting}
+                  >
+                    {CATEGORIES.map(category => (
+                      <option key={category} value={category}>
+                        {category}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-gray-700 font-medium mb-2">
+                    Tags (comma-separated)
+                  </label>
+                  <input
+                    type="text"
+                    name="tags"
+                    value={formData.tags}
+                    onChange={handleChange}
+                    placeholder="e.g., rock, album review, new release"
+                    className="w-full p-3 bg-white/60 border border-gray-200 rounded-lg"
+                    disabled={isSubmitting}
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-gray-700 font-medium mb-2">
+                    Summary *
+                  </label>
+                  <textarea
+                    name="summary"
+                    value={formData.summary}
+                    onChange={handleChange}
+                    rows="4"
+                    className="w-full p-3 bg-white/60 border border-gray-200 rounded-lg"
+                    disabled={isSubmitting}
+                  />
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    id="autosave"
+                    checked={autoSaveEnabled}
+                    onChange={(e) => setAutoSaveEnabled(e.target.checked)}
+                    className="rounded text-[#98e4d3]"
+                    disabled={isSubmitting}
+                  />
+                  <label htmlFor="autosave" className="text-sm text-gray-600">
+                    Enable autosave
+                  </label>
+                </div>
               </div>
 
-              <div>
-                <label className="block text-gray-700 font-medium mb-2">
-                  Category *
-                </label>
-                <select
-                  name="category"
-                  value={formData.category}
-                  onChange={handleChange}
-                  className="w-full p-3 bg-white/60 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#98e4d3] focus:border-transparent"
-                  disabled={isSubmitting}
-                >
-                  {CATEGORIES.map(category => (
-                    <option key={category} value={category}>
-                      {category}
-                    </option>
-                  ))}
-                </select>
-              </div>
+              <div className="space-y-6">
+                <div>
+                  <label className="block text-gray-700 font-medium mb-2">
+                    Content *
+                  </label>
+                  <RichTextEditor
+                    content={formData.content}
+                    onChange={handleContentChange}
+                  />
+                </div>
 
-              <div>
-                <label className="block text-gray-700 font-medium mb-2">
-                  Tags (comma-separated)
-                </label>
-                <input
-                  type="text"
-                  name="tags"
-                  value={formData.tags}
-                  onChange={handleChange}
-                  placeholder="e.g., rock, album review, new release"
-                  className="w-full p-3 bg-white/60 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#98e4d3] focus:border-transparent"
-                  disabled={isSubmitting}
-                />
-              </div>
-
-              <div>
-                <label className="block text-gray-700 font-medium mb-2">
-                  Summary *
-                </label>
-                <textarea
-                  name="summary"
-                  value={formData.summary}
-                  onChange={handleChange}
-                  rows="4"
-                  className="w-full p-3 bg-white/60 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#98e4d3] focus:border-transparent"
-                  required
-                  placeholder="Write a brief summary of your blog post"
-                  disabled={isSubmitting}
-                />
-              </div>
-
-              <div className="flex items-center gap-2">
-                <input
-                  type="checkbox"
-                  id="autosave"
-                  checked={autoSaveEnabled}
-                  onChange={(e) => setAutoSaveEnabled(e.target.checked)}
-                  className="rounded text-[#98e4d3] focus:ring-[#98e4d3]"
-                  disabled={isSubmitting}
-                />
-                <label htmlFor="autosave" className="text-sm text-gray-600">
-                  Enable autosave
-                </label>
-              </div>
-            </div>
-
-            <div className="space-y-6">
-              <label className="block text-gray-700 font-medium mb-2">
-                Content *
-              </label>
-              <div className="bg-white/60 rounded-lg">
-                <RichTextEditor 
-                  content={formData.content}
-                  onChange={handleContentChange}
-                  disabled={isSubmitting}
-                />
-              </div>
-
-              <div>
-                <label className="block text-gray-700 font-medium mb-2">
-                  Featured Image
-                </label>
-                <input
-                  type="file"
-                  name="image"
-                  accept="image/*"
-                  onChange={handleChange}
-                  className="w-full p-3 bg-white/60 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#98e4d3] focus:border-transparent"
-                  disabled={isSubmitting}
-                />
+                <div>
+                  <label className="block text-gray-700 font-medium mb-2">
+                    Featured Image URL
+                  </label>
+                  <input
+                    type="text"
+                    name="imageUrl"
+                    value={formData.imageUrl}
+                    onChange={handleChange}
+                    className="w-full p-3 bg-white/60 border border-gray-200 rounded-lg"
+                    disabled={isSubmitting}
+                  />
+                </div>
               </div>
             </div>
-          </div>
 
-          <div className="flex justify-end space-x-4 mt-6">
-            <button
-              type="button"
-              onClick={() => navigate('/blog')}
-              className="px-6 py-2 bg-white/60 border border-gray-200 rounded-lg hover:bg-gray-50"
-              disabled={isSubmitting}
-            >
-              Cancel
-            </button>
-            <button
-              type="button"
-              onClick={handleSaveDraft}
-              className="px-6 py-2 bg-white/60 border border-[#98e4d3] text-[#2c7566] rounded-lg hover:bg-[#98e4d3]/20"
-              disabled={isSubmitting}
-            >
-              {isSubmitting ? 'Saving...' : 'Save Draft'}
-            </button>
-            <button
-              type="button"
-              onClick={handlePublish}
-              className="px-6 py-2 bg-[#98e4d3] text-white rounded-lg hover:bg-[#7fcebe]"
-              disabled={isSubmitting}
-            >
-              {isSubmitting ? 'Publishing...' : 'Publish'}
-            </button>
-          </div>
+            <div className="flex justify-end space-x-4 mt-6">
+              <button
+                type="button"
+                onClick={() => navigate('/blog')}
+                className="px-6 py-2 bg-white/60 border border-gray-200 rounded-lg hover:bg-gray-50"
+                disabled={isSubmitting}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleSaveDraft}
+                className="px-6 py-2 bg-white/60 border border-[#98e4d3] text-[#2c7566] rounded-lg hover:bg-[#98e4d3]/20"
+                disabled={isSubmitting}
+              >
+                {isSubmitting ? 'Saving...' : 'Save Draft'}
+              </button>
+              <button
+                type="submit"
+                className="px-6 py-2 bg-[#98e4d3] text-white rounded-lg hover:bg-[#7fcebe] disabled:opacity-50 disabled:cursor-not-allowed"
+                disabled={isSubmitting}
+              >
+                {isSubmitting ? 'Publishing...' : 'Publish'}
+              </button>
+            </div>
+          </form>
         </div>
       </div>
     </div>

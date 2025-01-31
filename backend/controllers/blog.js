@@ -1,29 +1,9 @@
 const Blog = require('../models/blog');
-const path = require('path');
-const fs = require('fs');
-
-// Create upload directories
-const createUploadDirs = () => {
-  const uploadsDir = path.join(__dirname, '../public/uploads');
-  const blogImagesDir = path.join(uploadsDir, 'blog-images');
-  
-  if (!fs.existsSync(uploadsDir)) {
-    fs.mkdirSync(uploadsDir, { recursive: true });
-  }
-  if (!fs.existsSync(blogImagesDir)) {
-    fs.mkdirSync(blogImagesDir, { recursive: true });
-  }
-};
-
-createUploadDirs();
 
 const blogController = {
   async create(req, res) {
     try {
-      console.log('Received blog data:', {
-        body: req.body,
-        file: req.file
-      });
+      console.log('Received blog data:', req.body);
 
       const blogData = {
         title: req.body.title,
@@ -31,7 +11,8 @@ const blogController = {
         category: req.body.category,
         summary: req.body.summary,
         status: req.body.status || 'draft',
-        author: req.user._id
+        author: req.user._id,
+        imageUrl: req.body.imageUrl || ''
       };
 
       if (req.body.tags) {
@@ -43,11 +24,6 @@ const blogController = {
           console.error('Error parsing tags:', e);
           blogData.tags = [];
         }
-      }
-
-      if (req.file) {
-        blogData.image = `/uploads/blog-images/${req.file.filename}`;
-        console.log('Image path set to:', blogData.image);
       }
 
       if (req.body.isDraft && req.body.previousDraftId) {
@@ -148,6 +124,7 @@ const blogController = {
       if (req.body.category) blog.category = req.body.category;
       if (req.body.summary) blog.summary = req.body.summary;
       if (req.body.status) blog.status = req.body.status;
+      if (req.body.imageUrl) blog.imageUrl = req.body.imageUrl;
       
       if (req.body.tags) {
         try {
@@ -157,22 +134,6 @@ const blogController = {
         } catch (e) {
           console.error('Error parsing tags:', e);
         }
-      }
-
-      if (req.file) {
-        if (blog.image) {
-          const oldImagePath = path.join(__dirname, '../public', blog.image);
-          try {
-            if (fs.existsSync(oldImagePath)) {
-              fs.unlinkSync(oldImagePath);
-            }
-          } catch (e) {
-            console.error('Error deleting old image:', e);
-          }
-        }
-        
-        blog.image = `/uploads/blog-images/${req.file.filename}`;
-        console.log('Updated image path:', blog.image);
       }
 
       await blog.save();
@@ -196,17 +157,6 @@ const blogController = {
 
       if (!blog) {
         return res.status(404).json({ error: 'Blog post not found or unauthorized' });
-      }
-
-      if (blog.image) {
-        const imagePath = path.join(__dirname, '../public', blog.image);
-        try {
-          if (fs.existsSync(imagePath)) {
-            fs.unlinkSync(imagePath);
-          }
-        } catch (e) {
-          console.error('Error deleting image file:', e);
-        }
       }
 
       res.json({ message: 'Blog post deleted successfully' });

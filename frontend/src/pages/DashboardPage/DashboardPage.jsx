@@ -96,20 +96,6 @@ export default function DashboardPage({ spotifyStatus, onSpotifyUpdate }) {
   return (
     <div className="dashboard-page">
       <div className="dashboard-content">
-        <div className="flex justify-between items-center mb-8">
-          <h1 className="font-sans text-3xl font-bold text-emerald-900">
-            Dashboard
-          </h1>
-          {isAdmin && (
-            <Link 
-              to="/blog/create"
-              className="bg-gradient-to-r from-emerald-500 to-teal-600 text-white px-4 py-2 rounded-lg hover:opacity-90 transition-opacity font-medium"
-            >
-              Write Blog Post
-            </Link>
-          )}
-        </div>
-
         {error && (
           <div className="mb-6 bg-red-50 text-red-600 p-3 rounded-lg">
             {error}
@@ -132,10 +118,20 @@ export default function DashboardPage({ spotifyStatus, onSpotifyUpdate }) {
             {/* Social Feed Section */}
             <div key="social" className="dashboard-item social-feed">
               <div className="p-6 h-full flex flex-col">
-                <h2 className="font-sans text-xl font-semibold text-gray-800 mb-6 flex items-center gap-2">
-                  <Users size={20} />
-                  Social Feed
-                </h2>
+                <div className="flex justify-between items-center mb-6">
+                  <h2 className="font-sans text-xl font-semibold text-gray-800 flex items-center gap-2">
+                    <Users size={20} />
+                    Social Feed
+                  </h2>
+                  {isAdmin && (
+                    <Link 
+                      to="/blog/create"
+                      className="text-emerald-600 hover:text-emerald-700 text-sm font-medium"
+                    >
+                      Write Blog Post
+                    </Link>
+                  )}
+                </div>
                 <PostForm onSubmit={handleCreatePost} />
                 <div className="flex-1 overflow-hidden">
                   <div className="h-full overflow-y-auto pr-2 space-y-4">

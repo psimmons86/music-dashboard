@@ -25,7 +25,7 @@ const blogSchema = new Schema({
   category: {
     type: String,
     required: true,
-    enum: ['Music News', 'Artist Spotlight', 'Features', 'Reviews', 'Tutorials']
+    enum: ['Music News', 'Artist Spotlight', 'Industry Trends', 'Reviews', 'Tutorials']
   },
   tags: [{
     type: String,
@@ -41,8 +41,9 @@ const blogSchema = new Schema({
     enum: ['draft', 'published'],
     default: 'draft'
   },
-  image: {
-    type: String
+  imageUrl: {
+    type: String,
+    default: ''
   },
   viewCount: {
     type: Number,
