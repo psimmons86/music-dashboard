@@ -1,9 +1,10 @@
 # Music Dashboard
-
 ![music-dashboard screenshot](https://i.imgur.com/KPvvfDP.png)
 ![music-dashboard screenshot](https://i.imgur.com/GHWeGWx.png)
 
 Full-stack web application for music discovery, playlist generation, and content sharing.
+
+**[Live Demo](https://music-dashboard-aed58e43f3b3.herokuapp.com/)**
 
 ## Features
 - Spotify API integration for playlist creation and management
@@ -16,11 +17,13 @@ Full-stack web application for music discovery, playlist generation, and content
 
 ## Tech Stack
 ### Frontend
-- React Grid Layout
-- TipTap rich text editor
-- Tailwind CSS
-- Recharts
-- Lucide icons
+- React 18
+- React Router v6
+- React Grid Layout - Draggable/resizable dashboard components
+- TipTap - Customizable rich text editor
+- Tailwind CSS - Utility-first CSS framework
+- Recharts - Responsive charting library
+- Lucide - Minimal icon library
 
 ### Backend
 - Node.js/Express
@@ -34,20 +37,26 @@ Full-stack web application for music discovery, playlist generation, and content
 - Axios
 - bcrypt
 
-## Architecture
-- RESTful API architecture
-- JWT-based authentication flow
-- MongoDB schemas for users, posts, articles, playlists
-- Component-based frontend with shared UI library
-- Responsive grid system for customizable layouts
-
-## Installation
+## Setup
 ```bash
 # Install dependencies
 npm install
 
 # Start backend
-npm run server
+nodemon server.js
 
 # Start frontend
-nodemon
+npm start
+```
+
+## Environment Variables
+```
+MONGODB_URI=
+JWT_SECRET=
+SPOTIFY_CLIENT_ID=
+SPOTIFY_CLIENT_SECRET=
+NEWS_API_KEY=
+```
+
+## Deployment
+The app is deployed on Heroku at [https://music-dashboard-aed58e43f3b3.herokuapp.com/](https://music-dashboard-aed58e43f3b3.herokuapp.com/)
