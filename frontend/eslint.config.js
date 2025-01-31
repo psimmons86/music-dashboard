@@ -43,7 +43,7 @@ export default [
       ],
       'react/prop-types': 'off',
       'react/no-unescaped-entities': 'off',
-      'import/no-unresolved': 'off', // Disable unresolved import checks
+      'import/no-unresolved': 'off',
     },
   },
 ];
