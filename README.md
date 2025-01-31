@@ -1,7 +1,7 @@
 # Music Dashboard
 
 ![music-dashboard screenshot](https://i.imgur.com/KPvvfDP.png)
-![music-dashboard screenshot](https://imgur.com/a/pNYYxK4.png)
+![music-dashboard screenshot](https://i.imgur.com/GHWeGWx.png)
 
 Full-stack web application for music discovery, playlist generation, and content sharing.
 
