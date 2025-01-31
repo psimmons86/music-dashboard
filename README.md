@@ -1,9 +1,7 @@
 # Music Dashboard
 
-<div style="display: flex; gap: 20px; margin-bottom: 30px">
- <img src="https://i.imgur.com/0F9g2x2.png" width="400" alt="Dashboard Preview">
- <img src="https://i.imgur.com/M7aNwJE.png" width="400" alt="Playlist Generator">
-</div>
+![music-dashboard screenshot](https://i.imgur.com/KPvvfDP.png)
+![music-dashboard screenshot](https://imgur.com/a/pNYYxK4)
 
 Full-stack web application for music discovery, playlist generation, and content sharing.
 
