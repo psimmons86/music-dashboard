@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import * as spotifyService from '../../services/spotifyService';
+import { Loader2 } from 'lucide-react';
 
 export default function SpotifyConnect() {
   const [error, setError] = useState('');
@@ -13,11 +14,7 @@ export default function SpotifyConnect() {
       const response = await spotifyService.connectSpotify();
       
       if (response?.url) {
-        // Log for debugging
-        console.log('Redirecting to:', response.url);
-        
-        // Use window.location.assign for more reliable redirect
-        window.location.assign(response.url);
+        window.location.href = response.url;
       } else {
         throw new Error('Invalid response from server');
       }
@@ -44,7 +41,7 @@ export default function SpotifyConnect() {
       >
         {isLoading ? (
           <>
-            <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+            <Loader2 className="h-5 w-5 animate-spin" />
             Connecting...
           </>
         ) : (

@@ -118,7 +118,6 @@ function MenuBar({ editor }) {
           if (!data.url) {
             throw new Error('Invalid response from server');
           }
-          // Ensure the URL is absolute
           const imageUrl = data.url.startsWith('http') ? data.url : `${window.location.origin}${data.url}`;
           editor.chain().focus().setImage({ src: imageUrl }).run();
         } catch (error) {

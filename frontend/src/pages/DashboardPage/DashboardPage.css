@@ -67,6 +67,23 @@
   transition: all 0.3s ease;
 }
 
+.weekly-playlist {
+  background: white;
+  border-radius: 1rem;
+  box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+}
+
+.dashboard-item {
+  background: white;
+  border-radius: 1rem;
+  overflow: hidden;
+  box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+}
+
+.dashboard-grid {
+  min-height: calc(100vh - 200px);
+}
+
 @media (min-width: 640px) {
   .dashboard-page .dashboard-content {
     padding-left: 1.5rem;

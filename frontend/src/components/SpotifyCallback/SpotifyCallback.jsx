@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router';
-import { getUser } from '../../services/authService';
 import * as spotifyService from '../../services/spotifyService';
+import { Loader2 } from 'lucide-react';
 
 export default function SpotifyCallback({ onSuccess }) {
   const [error, setError] = useState('');
@@ -11,22 +11,14 @@ export default function SpotifyCallback({ onSuccess }) {
   useEffect(() => {
     const handleCallback = async () => {
       try {
-        // Check if user is logged in
-        const user = getUser();
-        if (!user) {
-          navigate('/login');
-          return;
-        }
-
-        // Get the authorization code from URL params
         const searchParams = new URLSearchParams(location.search);
         const code = searchParams.get('code');
         
         if (!code) {
-          throw new Error('No authorization code received from Spotify');
+          throw new Error('No authorization code received');
         }
 
-        // Handle the callback
+        // Exchange code for tokens
         await spotifyService.handleSpotifyCallback(code);
         
         // Call success callback if provided
@@ -34,19 +26,18 @@ export default function SpotifyCallback({ onSuccess }) {
           await onSuccess();
         }
         
-        // Redirect to dashboard with success message
-        navigate('/dashboard', {
+        // Redirect to dashboard with success state
+        navigate('/dashboard', { 
           state: { message: 'Successfully connected to Spotify!' }
         });
-
       } catch (error) {
         console.error('Spotify callback error:', error);
         setError(error.message || 'Failed to connect to Spotify');
         
-        // Redirect to dashboard with error message after a delay
+        // Redirect to dashboard with error after delay
         setTimeout(() => {
           navigate('/dashboard', {
-            state: { error: error.message || 'Failed to connect to Spotify' }
+            state: { error: 'Failed to connect to Spotify' }
           });
         }, 3000);
       }
@@ -64,10 +55,12 @@ export default function SpotifyCallback({ onSuccess }) {
           </h2>
           
           {error ? (
-            <div className="text-red-600 mb-4">{error}</div>
+            <div className="text-red-600 bg-red-50 p-4 rounded-lg mb-4">
+              {error}
+            </div>
           ) : (
             <div className="flex justify-center">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-emerald-600"></div>
+              <Loader2 className="h-12 w-12 animate-spin text-emerald-600" />
             </div>
           )}
           

@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Card, CardHeader, CardContent } from '@/components/ui/card';
 import { Music, Loader2 } from 'lucide-react';
-import * as spotifyService from '../../services/spotifyService';
+import * as weeklyPlaylistService from '../../services/weeklyPlaylistService';
 
 export default function WeeklyPlaylist() {
   const [playlist, setPlaylist] = useState(null);
@@ -9,54 +9,42 @@ export default function WeeklyPlaylist() {
   const [error, setError] = useState('');
 
   useEffect(() => {
-    const generateWeeklyPlaylist = async () => {
+    async function fetchPlaylist() {
       try {
         setIsLoading(true);
-        setError('');
-
-        // Get week number for consistent weekly playlists
-        const currentDate = new Date();
-        const startDate = new Date(currentDate.getFullYear(), 0, 1);
-        const days = Math.floor((currentDate - startDate) / (24 * 60 * 60 * 1000));
-        const weekNumber = Math.ceil(days / 7);
-
-        // Use week number to determine genre and mood
-        const genres = ['Rock', 'Pop', 'Electronic', 'Hip Hop', 'Jazz', 'Classical'];
-        const moods = ['Happy', 'Chill', 'Energetic', 'Focused'];
-
-        const weeklyGenre = genres[weekNumber % genres.length];
-        const weeklyMood = moods[weekNumber % moods.length];
-
-        const recommendations = await spotifyService.getRecommendations(weeklyGenre, weeklyMood);
-        setPlaylist(recommendations);
-      } catch (error) {
-        console.error('Error generating weekly playlist:', error);
-        setError(error.message || 'Failed to generate playlist');
+        const data = await weeklyPlaylistService.getCurrentPlaylist();
+        setPlaylist(data);
+      } catch (err) {
+        setError(err.message);
       } finally {
         setIsLoading(false);
       }
-    };
+    }
 
-    generateWeeklyPlaylist();
+    fetchPlaylist();
   }, []);
 
   return (
     <Card className="w-full bg-white/60">
-      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+      <CardHeader>
         <div className="flex items-center gap-2">
           <Music className="h-4 w-4 text-emerald-600" />
-          <h3 className="font-semibold text-gray-800">Weekly Playlist</h3>
+          <h3 className="font-semibold text-gray-800">
+            {playlist?.title || 'Weekly Editorial Playlist'}
+          </h3>
         </div>
+        {playlist?.description && (
+          <p className="text-sm text-gray-600">{playlist.description}</p>
+        )}
       </CardHeader>
+      
       <CardContent>
         {isLoading ? (
-          <div className="flex justify-center items-center h-64">
+          <div className="flex justify-center p-8">
             <Loader2 className="h-8 w-8 animate-spin text-emerald-600" />
           </div>
         ) : error ? (
-          <div className="text-red-500 text-sm p-4 text-center">
-            {error}
-          </div>
+          <div className="text-red-500 text-center p-4">{error}</div>
         ) : playlist?.embedUrl ? (
           <div className="aspect-square w-full">
             <iframe
@@ -70,8 +58,8 @@ export default function WeeklyPlaylist() {
             />
           </div>
         ) : (
-          <div className="text-center text-gray-500 p-4">
-            No playlist available
+          <div className="text-center p-4 text-gray-500">
+            No playlist selected for this week
           </div>
         )}
       </CardContent>

@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router';
 import { Responsive, WidthProvider } from 'react-grid-layout';
 import { Users, Music, FileText, Disc, Crown, Newspaper } from 'lucide-react';
+import { useAuth } from '../../contexts/AuthContext';
 import 'react-grid-layout/css/styles.css';
 import 'react-resizable/css/styles.css';
 import './DashboardPage.css';
@@ -120,6 +121,7 @@ function UserPlaylistsSection({ playlists }) {
 }
 
 export default function DashboardPage({ spotifyStatus, onSpotifyUpdate }) {
+  const { isAdmin } = useAuth();
   const [posts, setPosts] = useState([]);
   const [topArtists, setTopArtists] = useState([]);
   const [recentAlbums, setRecentAlbums] = useState([]);
@@ -133,7 +135,8 @@ export default function DashboardPage({ spotifyStatus, onSpotifyUpdate }) {
           lg: [
             { i: 'social', x: 0, y: 0, w: 12, h: 12 }, 
             { i: 'music', x: 0, y: 12, w: 6, h: 12 },
-            { i: 'news', x: 6, y: 12, w: 6, h: 12 }, 
+            { i: 'weekly', x: 6, y: 12, w: 6, h: 8 },
+            { i: 'news', x: 6, y: 20, w: 6, h: 12 }, 
             { i: 'blogs', x: 0, y: 24, w: 12, h: 8 }
           ]
         }  
@@ -210,12 +213,22 @@ export default function DashboardPage({ spotifyStatus, onSpotifyUpdate }) {
           <h1 className="font-sans text-3xl font-bold text-emerald-900">
             Dashboard
           </h1>
-          <Link 
-            to="/blog/create"
-            className="bg-gradient-to-r from-emerald-500 to-teal-600 text-white px-4 py-2 rounded-lg hover:opacity-90 transition-opacity font-medium"
-          >
-            Write Blog Post  
-          </Link>
+          <div className="flex gap-4">
+            <Link 
+              to="/blog/create"
+              className="bg-gradient-to-r from-emerald-500 to-teal-600 text-white px-4 py-2 rounded-lg hover:opacity-90 transition-opacity font-medium"
+            >
+              Write Blog Post  
+            </Link>
+            {isAdmin && (
+              <Link 
+                to="/admin/weekly-playlist"
+                className="bg-gradient-to-r from-purple-500 to-indigo-600 text-white px-4 py-2 rounded-lg hover:opacity-90 transition-opacity font-medium"
+              >
+                Manage Weekly Playlist
+              </Link>
+            )}
+          </div>
         </div>
 
         {error && (
@@ -259,17 +272,15 @@ export default function DashboardPage({ spotifyStatus, onSpotifyUpdate }) {
               </div>
             </div>
 
-            {/* Music Section */}
             <div key="music" className="dashboard-item music-player">
               <div className="p-6 h-full flex flex-col">
                 <h2 className="font-sans text-xl font-semibold text-gray-800 mb-6 flex items-center gap-2">
                   <Music size={20} /> 
                   Music Player
                 </h2>
-                <div className="flex-1 overflow-hidden">
+                <div className="flex-1 overflow-y-auto">
                   {spotifyStatus.connected ? (
-                    <div className="h-full overflow-y-auto pr-2 space-y-6">
-                      <WeeklyPlaylist />
+                    <div className="space-y-6">
                       <TopArtistsSection artists={topArtists} />
                       <RecentAlbumsSection albums={recentAlbums} />
                       <UserPlaylistsSection playlists={userPlaylists} />
@@ -282,6 +293,29 @@ export default function DashboardPage({ spotifyStatus, onSpotifyUpdate }) {
                       <SpotifyConnect onSuccess={onSpotifyUpdate} />
                     </div>
                   )}
+                </div>
+              </div>
+            </div>
+
+            {/* Weekly Playlist Section */}
+            <div key="weekly" className="dashboard-item weekly-playlist">
+              <div className="p-6 h-full flex flex-col">
+                <h2 className="font-sans text-xl font-semibold text-gray-800 mb-6 flex items-center gap-2">
+                  <Crown size={20} />
+                  Weekly Playlist
+                  {isAdmin && (
+                    <Link 
+                      to="/admin/weekly-playlist"
+                      className="ml-auto text-sm text-emerald-600 hover:text-emerald-700"
+                    >
+                      Edit
+                    </Link>
+                  )}
+                </h2>
+                <div className="flex-1 overflow-hidden">
+                  <div className="h-full overflow-y-auto pr-2">
+                    <WeeklyPlaylist />
+                  </div>
                 </div>
               </div>
             </div>
