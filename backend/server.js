@@ -29,9 +29,8 @@ app.use('/uploads', express.static(path.join(__dirname, 'public/uploads')));
 app.use('/api/auth', require('./routes/auth'));
 app.use('/api/news', require('./routes/news'));
 
-// Spotify auth routes (must be before checkToken middleware)
-app.use('/api/spotify/connect', require('./routes/spotify'));
-app.use('/api/spotify/callback', require('./routes/spotify'));
+// Spotify routes - keep all Spotify routes together
+app.use('/api/spotify', require('./routes/spotify'));
 
 // Auth middleware for protected routes
 app.use('/api', require('./middleware/checkToken'));
@@ -39,15 +38,20 @@ app.use('/api', require('./middleware/ensureLoggedIn'));
 
 // Protected routes (auth required)
 app.use('/api/blog', require('./routes/blog'));
-app.use('/api/spotify', require('./routes/spotify'));
 app.use('/api/articles', require('./routes/articles'));
 app.use('/api/user', require('./routes/user'));
 app.use('/api/posts', require('./routes/posts'));
 app.use('/api/playlist', require('./routes/playlist'));
+app.use('/api/weekly-playlist', require('./routes/weeklyPlaylist'));
 
 // SPA catch-all route
 app.get('/*', function(req, res) {
-  res.sendFile(path.join(__dirname, '../frontend/dist/index.html'));
+  const frontendPath = path.join(__dirname, '../frontend/dist/index.html');
+  if (fs.existsSync(frontendPath)) {
+    res.sendFile(frontendPath);
+  } else {
+    res.status(404).send('Frontend build not found. Please run npm run build in the frontend directory.');
+  }
 });
 
 // Global error handling middleware
@@ -68,13 +72,9 @@ app.use((err, req, res, next) => {
   });
 });
 
-// Start server
 const port = process.env.PORT || 3000;
 
 app.listen(port, () => {
   console.log(`Express app running on port ${port}`);
   console.log(`Environment: ${process.env.NODE_ENV}`);
-  if (process.env.SPOTIFY_REDIRECT_URI) {
-    console.log(`Spotify callback URL: ${process.env.SPOTIFY_REDIRECT_URI}`);
-  }
 });

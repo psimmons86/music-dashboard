@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router';
 import { Responsive, WidthProvider } from 'react-grid-layout';
-import { Users, Music, FileText, Disc, Crown, Newspaper } from 'lucide-react';
+import { Users, Music, FileText, Crown, Newspaper } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import 'react-grid-layout/css/styles.css';
 import 'react-resizable/css/styles.css';
@@ -10,7 +10,6 @@ import './DashboardPage.css';
 // Services
 import * as postService from '../../services/postService';
 import * as spotifyService from '../../services/spotifyService';
-import * as blogService from '../../services/blogService';
 
 // Components 
 import PostForm from '../../components/PostForm/PostForm';
@@ -19,113 +18,13 @@ import NewsFeed from '../../components/NewsFeed/NewsFeed';
 import SpotifyConnect from '../../components/SpotifyConnect/SpotifyConnect';
 import WeeklyPlaylist from '../../components/WeeklyPlaylist/WeeklyPlaylist';
 import BlogFeed from '../../components/BlogFeed/BlogFeed';
+import PlaylistCard from '../../components/PlaylistCard/PlaylistCard';
 
 const ResponsiveGridLayout = WidthProvider(Responsive);
-
-// Helper Components
-function TopArtistsSection({ artists }) {
-  if (!artists?.length) return null;
-
-  return (
-    <div className="bg-white/50 rounded-xl p-4">
-      <h3 className="font-medium text-gray-800 mb-3 text-sm flex items-center gap-2">
-        <Users size={14} />
-        Your Top Artists  
-      </h3>
-      <div className="grid grid-cols-2 gap-2">
-        {artists.slice(0, 4).map((artist) => (
-          <div 
-            key={artist.id}
-            className="bg-white/50 p-2 rounded-lg flex items-center gap-2"
-          >
-            {artist.images?.[0]?.url && (
-              <img 
-                src={artist.images[0].url} 
-                alt={artist.name}
-                className="w-8 h-8 rounded-full"
-              />
-            )}
-            <span className="text-xs">{artist.name}</span>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-}
-
-function RecentAlbumsSection({ albums }) {
-  if (!albums?.length) return null;
-  
-  return (
-    <div className="bg-white/50 rounded-xl p-4">
-      <h3 className="font-medium text-gray-800 mb-3 text-sm flex items-center gap-2">
-        <Disc size={14} />
-        Recent Albums
-      </h3>
-      <div className="grid grid-cols-2 gap-2">
-        {albums.slice(0, 4).map((album) => (
-          <div key={album.id} className="bg-white/50 p-2 rounded-lg">
-            {album.images?.[0]?.url && (
-              <img 
-                src={album.images[0].url}
-                alt={album.name}
-                className="w-full aspect-square object-cover rounded-md mb-1"
-              />
-            )}
-            <p className="text-xs truncate">{album.name}</p>
-            <p className="text-xs text-gray-500 truncate">
-              {album.artists?.[0]?.name}  
-            </p>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-}
-
-function UserPlaylistsSection({ playlists }) {
-  if (!playlists?.length) return null;
-
-  return (
-    <div className="bg-white/50 rounded-xl p-4">
-      <h3 className="font-medium text-gray-800 mb-3 text-sm flex items-center gap-2">
-        <Music size={14} />
-        Your Playlists
-      </h3>
-      <div className="space-y-2">
-        {playlists.slice(0, 3).map((playlist) => (
-          <div 
-            key={playlist.id}
-            className="bg-white/50 p-2 rounded-lg flex items-center gap-2"
-          >
-            {playlist.images?.[0]?.url ? (
-              <img 
-                src={playlist.images[0].url}
-                alt={playlist.name}
-                className="w-8 h-8 object-cover rounded"
-              />
-            ) : (
-              <div className="w-8 h-8 bg-gray-200 rounded"></div>
-            )}
-            <div>
-              <p className="text-xs font-medium">{playlist.name}</p>
-              <p className="text-xs text-gray-500">
-                {playlist.tracks?.total || 0} tracks
-              </p>
-            </div>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-}
 
 export default function DashboardPage({ spotifyStatus, onSpotifyUpdate }) {
   const { isAdmin } = useAuth();
   const [posts, setPosts] = useState([]);
-  const [topArtists, setTopArtists] = useState([]);
-  const [recentAlbums, setRecentAlbums] = useState([]);
-  const [userPlaylists, setUserPlaylists] = useState([]);
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   const [layouts, setLayouts] = useState(
@@ -135,7 +34,7 @@ export default function DashboardPage({ spotifyStatus, onSpotifyUpdate }) {
           lg: [
             { i: 'social', x: 0, y: 0, w: 12, h: 12 }, 
             { i: 'music', x: 0, y: 12, w: 6, h: 12 },
-            { i: 'weekly', x: 6, y: 12, w: 6, h: 8 },
+            { i: 'playlist', x: 6, y: 12, w: 6, h: 8 },
             { i: 'news', x: 6, y: 20, w: 6, h: 12 }, 
             { i: 'blogs', x: 0, y: 24, w: 12, h: 8 }
           ]
@@ -150,18 +49,6 @@ export default function DashboardPage({ spotifyStatus, onSpotifyUpdate }) {
 
         const postsData = await postService.index();
         setPosts(postsData);
-        
-        if (spotifyStatus.connected) {
-          const [artists, albums, playlists] = await Promise.all([
-            spotifyService.getTopArtists(),
-            spotifyService.getRecentAlbums(),
-            spotifyService.getUserPlaylists()
-          ]);
-          
-          setTopArtists(artists);
-          setRecentAlbums(albums);
-          setUserPlaylists(playlists);
-        }
       } catch (err) {
         console.error('Error loading dashboard:', err);
         setError('Failed to load some content');
@@ -171,7 +58,7 @@ export default function DashboardPage({ spotifyStatus, onSpotifyUpdate }) {
     }
     
     fetchData();
-  }, [spotifyStatus.connected]);
+  }, []);
  
   const handleCreatePost = async (postData) => {
     try {
@@ -213,22 +100,14 @@ export default function DashboardPage({ spotifyStatus, onSpotifyUpdate }) {
           <h1 className="font-sans text-3xl font-bold text-emerald-900">
             Dashboard
           </h1>
-          <div className="flex gap-4">
+          {isAdmin && (
             <Link 
               to="/blog/create"
               className="bg-gradient-to-r from-emerald-500 to-teal-600 text-white px-4 py-2 rounded-lg hover:opacity-90 transition-opacity font-medium"
             >
-              Write Blog Post  
+              Write Blog Post
             </Link>
-            {isAdmin && (
-              <Link 
-                to="/admin/weekly-playlist"
-                className="bg-gradient-to-r from-purple-500 to-indigo-600 text-white px-4 py-2 rounded-lg hover:opacity-90 transition-opacity font-medium"
-              >
-                Manage Weekly Playlist
-              </Link>
-            )}
-          </div>
+          )}
         </div>
 
         {error && (
@@ -272,6 +151,7 @@ export default function DashboardPage({ spotifyStatus, onSpotifyUpdate }) {
               </div>
             </div>
 
+            {/* Music Player Section */}
             <div key="music" className="dashboard-item music-player">
               <div className="p-6 h-full flex flex-col">
                 <h2 className="font-sans text-xl font-semibold text-gray-800 mb-6 flex items-center gap-2">
@@ -280,11 +160,10 @@ export default function DashboardPage({ spotifyStatus, onSpotifyUpdate }) {
                 </h2>
                 <div className="flex-1 overflow-y-auto">
                   {spotifyStatus.connected ? (
-                    <div className="space-y-6">
-                      <TopArtistsSection artists={topArtists} />
-                      <RecentAlbumsSection albums={recentAlbums} />
-                      <UserPlaylistsSection playlists={userPlaylists} />
-                    </div>
+                    <PlaylistCard
+                      title="Create Daily Mix"
+                      onPlaylistCreated={(playlist) => console.log('Playlist created:', playlist)}
+                    />
                   ) : (
                     <div className="text-center">
                       <p className="text-gray-600 text-sm mb-6">
@@ -298,19 +177,11 @@ export default function DashboardPage({ spotifyStatus, onSpotifyUpdate }) {
             </div>
 
             {/* Weekly Playlist Section */}
-            <div key="weekly" className="dashboard-item weekly-playlist">
+            <div key="playlist" className="dashboard-item weekly-playlist">
               <div className="p-6 h-full flex flex-col">
                 <h2 className="font-sans text-xl font-semibold text-gray-800 mb-6 flex items-center gap-2">
                   <Crown size={20} />
                   Weekly Playlist
-                  {isAdmin && (
-                    <Link 
-                      to="/admin/weekly-playlist"
-                      className="ml-auto text-sm text-emerald-600 hover:text-emerald-700"
-                    >
-                      Edit
-                    </Link>
-                  )}
                 </h2>
                 <div className="flex-1 overflow-hidden">
                   <div className="h-full overflow-y-auto pr-2">

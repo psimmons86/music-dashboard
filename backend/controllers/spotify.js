@@ -1,5 +1,6 @@
 const SpotifyWebApi = require('spotify-web-api-node');
 const User = require('../models/user');
+const jwt = require('jsonwebtoken');
 
 // Initialize Spotify API with credentials
 const spotifyApi = new SpotifyWebApi({
@@ -24,54 +25,68 @@ const REQUIRED_SCOPES = [
 
 async function connect(req, res) {
   try {
-    // Log environment variables for debugging
-    console.log('Environment Check:');
-    console.log('Client ID:', process.env.SPOTIFY_CLIENT_ID);
-    console.log('Redirect URI:', process.env.SPOTIFY_REDIRECT_URI);
-
-    // Generate state
-    const state = Math.random().toString(36).substring(7);
-
-    // Create authorization URL manually to ensure proper encoding
-    const params = new URLSearchParams({
-      client_id: process.env.SPOTIFY_CLIENT_ID,
-      response_type: 'code',
-      redirect_uri: process.env.SPOTIFY_REDIRECT_URI,
-      scope: REQUIRED_SCOPES,
-      state: state
-    });
-
-    const authorizeURL = `https://accounts.spotify.com/authorize?${params.toString()}`;
+    // Generate state that includes user ID
+    const state = req.user ? req.user._id.toString() : 'anonymous';
     
-    // Log the final URL
+    // Create authorization URL
+    const authorizeURL = spotifyApi.createAuthorizeURL(
+      REQUIRED_SCOPES.split(' '),
+      state
+    );
+    
     console.log('Generated Spotify authorize URL:', authorizeURL);
-    
     res.json({ url: authorizeURL });
   } catch (error) {
     console.error('Spotify connect error:', error);
-    res.status(500).json({ 
-      error: 'Failed to initialize Spotify connection',
-      details: error.message
-    });
+    res.status(500).json({ error: 'Failed to initialize Spotify connection' });
   }
 }
 
 async function callback(req, res) {
   try {
-    console.log('Received callback with code:', req.body.code);
-    
-    const data = await spotifyApi.authorizationCodeGrant(req.body.code);
-    console.log('Token data received:', {
+    const { code, state } = req.body;
+    console.log('Received callback with code and state:', { code, state });
+
+    if (!code) {
+      throw new Error('No authorization code received');
+    }
+
+    // Get user from token
+    let user;
+    const token = req.headers.authorization?.replace('Bearer ', '');
+    if (token) {
+      const decoded = jwt.verify(token, process.env.SECRET);
+      user = await User.findById(decoded.user._id);
+    }
+
+    if (!user) {
+      throw new Error('User not found');
+    }
+
+    // Exchange code for tokens
+    console.log('Exchanging code for tokens...');
+    const data = await spotifyApi.authorizationCodeGrant(code);
+    console.log('Token response received:', {
       expires_in: data.body.expires_in,
-      received: Boolean(data.body.access_token)
+      access_token_received: Boolean(data.body.access_token),
+      refresh_token_received: Boolean(data.body.refresh_token)
     });
 
+    // Set tokens on API instance
     spotifyApi.setAccessToken(data.body.access_token);
+    spotifyApi.setRefreshToken(data.body.refresh_token);
+
+    // Get Spotify user profile
+    console.log('Getting Spotify user profile...');
     const me = await spotifyApi.getMe();
-    
-    // Update user with Spotify tokens
-    const user = await User.findByIdAndUpdate(
-      req.user._id,
+    console.log('Spotify profile received:', {
+      id: me.body.id,
+      email: me.body.email
+    });
+
+    // Update user with Spotify data
+    const updatedUser = await User.findByIdAndUpdate(
+      user._id,
       {
         spotifyAccessToken: data.body.access_token,
         spotifyRefreshToken: data.body.refresh_token,
@@ -81,8 +96,8 @@ async function callback(req, res) {
       { new: true }
     );
 
-    if (!user) {
-      throw new Error('User not found');
+    if (!updatedUser) {
+      throw new Error('Failed to update user with Spotify data');
     }
 
     res.json({ success: true });
@@ -102,7 +117,6 @@ async function status(req, res) {
       return res.status(404).json({ error: 'User not found' });
     }
 
-    // Check if token is expired
     const isExpired = user.spotifyTokenExpiry && 
       new Date() > new Date(user.spotifyTokenExpiry);
 
@@ -115,6 +129,7 @@ async function status(req, res) {
     res.status(500).json({ error: 'Failed to check Spotify status' });
   }
 }
+
 
 async function disconnect(req, res) {
   try {

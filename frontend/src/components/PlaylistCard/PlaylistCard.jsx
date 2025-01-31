@@ -4,7 +4,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Loader2, Music } from 'lucide-react';
 
 export default function PlaylistCard({ 
-  title = 'Generate Playlist', 
+  title = 'Create Daily Mix', 
   actionButtonText = 'Create Playlist',
   loadingText = 'Generating...',
   onPlaylistCreated 
@@ -62,6 +62,9 @@ export default function PlaylistCard({
         ) : (
           <div className="flex flex-col items-center justify-center h-64 space-y-4">
             <Music className="w-12 h-12 text-emerald-600" />
+            <p className="text-gray-600 text-sm text-center mb-4">
+              Generate a playlist with 20 randomly selected songs from your Spotify favorites!
+            </p>
             <button
               onClick={handleCreatePlaylist}
               disabled={loading}

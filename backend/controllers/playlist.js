@@ -16,30 +16,29 @@ async function createPlaylist(req, res) {
       accessToken: user.spotifyAccessToken
     });
 
-    // Get user profile
-    const me = await spotifyApi.getMe();
-
     try {
+      // Get user profile
+      const me = await spotifyApi.getMe();
+      
       // Fetch user's saved tracks
       const savedTracks = await spotifyApi.getMySavedTracks({ limit: 50 });
       
-      // If no saved tracks, return error
       if (!savedTracks.body.items.length) {
         return res.status(400).json({ 
           error: 'No saved tracks found. Save some tracks on Spotify first!' 
         });
       }
 
-      // Shuffle tracks
+      // Shuffle tracks and take 20
       const shuffledTracks = savedTracks.body.items
         .sort(() => 0.5 - Math.random())
-        .slice(0, 30); // Limit to 30 tracks
+        .slice(0, 20);
 
-      // Create playlist
+      // Create playlist with today's date
       const playlistName = `Daily Mix - ${new Date().toLocaleDateString()}`;
       const playlist = await spotifyApi.createPlaylist(me.body.id, {
         name: playlistName,
-        description: 'Shuffled daily playlist of your favorite tracks',
+        description: 'Your daily mix of favorite tracks',
         public: false
       });
 
@@ -72,10 +71,7 @@ async function createPlaylist(req, res) {
         });
       }
 
-      return res.status(500).json({ 
-        error: 'Failed to create playlist',
-        details: spotifyError.message
-      });
+      throw spotifyError;
     }
 
   } catch (error) {

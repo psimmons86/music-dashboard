@@ -8,28 +8,31 @@ export default function SpotifyConnect() {
 
   const handleConnect = async () => {
     try {
+      console.log('Starting Spotify connection process...');
       setIsLoading(true);
       setError('');
 
       const response = await spotifyService.connectSpotify();
+      console.log('Spotify connect response:', response);
       
       if (response?.url) {
+        console.log('Redirecting to Spotify auth URL:', response.url);
         window.location.href = response.url;
       } else {
-        throw new Error('Invalid response from server');
+        throw new Error('No Spotify authorization URL received');
       }
-    } catch (error) {
-      console.error('Connection error:', error);
-      setError(error.message || 'Failed to connect to Spotify');
+    } catch (err) {
+      console.error('Spotify connection error:', err);
+      setError(err.message || 'Failed to connect to Spotify');
     } finally {
       setIsLoading(false);
     }
   };
 
   return (
-    <div className="flex flex-col items-center gap-4">
+    <div className="flex flex-col items-center gap-4 p-4">
       {error && (
-        <div className="text-red-600 text-sm bg-red-50 p-2 rounded-md">
+        <div className="w-full text-red-600 text-sm bg-red-50 p-3 rounded-lg border border-red-200">
           {error}
         </div>
       )}
@@ -37,7 +40,7 @@ export default function SpotifyConnect() {
       <button
         onClick={handleConnect}
         disabled={isLoading}
-        className="bg-[#1DB954] hover:bg-[#1ed760] text-white font-bold px-6 py-3 rounded-full flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+        className="bg-[#1DB954] hover:bg-[#1ed760] text-white font-bold px-6 py-3 rounded-lg flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
       >
         {isLoading ? (
           <>

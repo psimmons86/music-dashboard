@@ -1,32 +1,43 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router';
+import { useAuth } from '../../contexts/AuthContext';
 import * as spotifyService from '../../services/spotifyService';
 import { Loader2 } from 'lucide-react';
 
 export default function SpotifyCallback({ onSuccess }) {
   const [error, setError] = useState('');
+  const { user } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
 
   useEffect(() => {
+    if (!user) {
+      navigate('/login', { 
+        state: { from: '/spotify/callback' + location.search }
+      });
+      return;
+    }
+
     const handleCallback = async () => {
       try {
         const searchParams = new URLSearchParams(location.search);
         const code = searchParams.get('code');
+        const state = searchParams.get('state');
         
         if (!code) {
           throw new Error('No authorization code received');
         }
 
+        console.log('Processing Spotify callback...', { code, state });
+
         // Exchange code for tokens
-        await spotifyService.handleSpotifyCallback(code);
+        await spotifyService.handleSpotifyCallback(code, state);
         
         // Call success callback if provided
         if (onSuccess) {
           await onSuccess();
         }
         
-        // Redirect to dashboard with success state
         navigate('/dashboard', { 
           state: { message: 'Successfully connected to Spotify!' }
         });
@@ -34,7 +45,6 @@ export default function SpotifyCallback({ onSuccess }) {
         console.error('Spotify callback error:', error);
         setError(error.message || 'Failed to connect to Spotify');
         
-        // Redirect to dashboard with error after delay
         setTimeout(() => {
           navigate('/dashboard', {
             state: { error: 'Failed to connect to Spotify' }
@@ -44,7 +54,7 @@ export default function SpotifyCallback({ onSuccess }) {
     };
 
     handleCallback();
-  }, [location.search, navigate, onSuccess]);
+  }, [location.search, navigate, onSuccess, user]);
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-r from-emerald-500 to-teal-600">

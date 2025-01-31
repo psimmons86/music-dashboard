@@ -8,7 +8,7 @@ const ensureLoggedIn = require('../middleware/ensureLoggedIn');
 router.get('/connect', spotifyCtrl.connect);
 router.post('/callback', spotifyCtrl.callback);
 
-// All routes below this require authentication
+// Protected routes (auth required)
 router.use(checkToken);
 router.use(ensureLoggedIn);
 

@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Routes, Route, Navigate } from 'react-router';
-import { getUser } from '../../services/authService';
+import { Routes, Route, Navigate, useLocation } from 'react-router';
 import * as spotifyService from '../../services/spotifyService';
 import { useAuth } from '../../contexts/AuthContext';
 import './App.css';
@@ -24,6 +23,7 @@ import BlogEditPage from '../BlogEditPage/BlogEditPage';
 
 export default function App() {
   const { user, setUser } = useAuth();
+  const location = useLocation();
   const [spotifyStatus, setSpotifyStatus] = useState({ 
     connected: false,
     checking: true 
@@ -37,9 +37,12 @@ export default function App() {
       }
 
       const status = await spotifyService.getSpotifyStatus();
+      console.log('Spotify status check result:', status);
+      
       setSpotifyStatus({ 
         connected: status.connected, 
-        checking: false 
+        checking: false,
+        userId: status.userId
       });
     } catch (error) {
       console.error('Error checking Spotify status:', error);
@@ -52,21 +55,27 @@ export default function App() {
   };
 
   useEffect(() => {
-    checkSpotifyStatus();
+    if (user) {
+      checkSpotifyStatus();
+    }
   }, [user]);
+
+  // Handle auth-required routes
+  const requireAuth = (element) => {
+    if (!user) {
+      return <Navigate to="/login" state={{ from: location.pathname }} replace />;
+    }
+    return element;
+  };
 
   return (
     <main className="App">
-      <NavBar 
-        user={user} 
-        setUser={setUser} 
-      />
+      <NavBar user={user} setUser={setUser} />
       
       <Routes>
         {/* Public Routes */}
         <Route path="/" element={<HomePage />} />
         
-        {/* Auth Routes */}
         <Route 
           path="/signup" 
           element={
@@ -77,7 +86,11 @@ export default function App() {
         <Route 
           path="/login" 
           element={
-            !user ? <LogInPage setUser={setUser} /> : <Navigate to="/dashboard" replace />
+            !user ? (
+              <LogInPage setUser={setUser} />
+            ) : (
+              <Navigate to={location.state?.from || '/dashboard'} replace />
+            )
           }
         />
 
@@ -85,24 +98,18 @@ export default function App() {
         <Route 
           path="/dashboard" 
           element={
-            user ? (
+            requireAuth(
               <DashboardPage 
                 spotifyStatus={spotifyStatus}
                 onSpotifyUpdate={checkSpotifyStatus}
               />
-            ) : (
-              <Navigate to="/login" state={{ from: '/dashboard' }} replace />
             )
           }
         />
 
         <Route 
           path="/profile" 
-          element={
-            user ? 
-            <ProfilePage user={user} /> : 
-            <Navigate to="/login" replace />
-          }
+          element={requireAuth(<ProfilePage user={user} />)}
         />
 
         {/* Blog Routes */}
@@ -128,7 +135,7 @@ export default function App() {
         
         <Route path="/blog/:id" element={<BlogDetailPage />} />
 
-        {/* Weekly Playlist Admin Route */}
+        {/* Admin Routes */}
         <Route 
           path="/admin/weekly-playlist" 
           element={
@@ -142,21 +149,22 @@ export default function App() {
         <Route 
           path="/spotify/callback" 
           element={
-            user ? (
-              <SpotifyCallback onSuccess={checkSpotifyStatus} />
-            ) : (
-              <Navigate to="/login" state={{ from: '/spotify/callback' }} replace />
+            requireAuth(
+              <SpotifyCallback 
+                onSuccess={checkSpotifyStatus}
+                user={user}
+              />
             )
           }
         />
 
-        {/* Catch-all route */}
+        {/* Catch-all Route */}
         <Route 
           path="*" 
           element={
             user ? 
             <Navigate to="/dashboard" replace /> : 
-            <Navigate to="/login" replace />
+            <Navigate to="/login" state={{ from: location.pathname }} replace />
           } 
         />
       </Routes>
