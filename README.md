@@ -17,12 +17,9 @@ Full-stack web application for music discovery, playlist generation, and content
 
 ## Tech Stack
 ### Frontend
-- React 18
-- React Router v6
 - React Grid Layout - Draggable/resizable dashboard components
 - TipTap - Customizable rich text editor
 - Tailwind CSS - Utility-first CSS framework
-- Recharts - Responsive charting library
 - Lucide - Minimal icon library
 
 ### Backend
