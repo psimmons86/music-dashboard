@@ -1,22 +1,10 @@
-/* DashboardPage.css */
-.dashboard-page .react-grid-item.react-grid-placeholder {
-  background: #98e4d3 !important;
-  opacity: 0.5;
-  border-radius: 2rem;
-}
-
-.dashboard-page .react-grid-item > .react-resizable-handle {
-  right: 10px;
-  bottom: 10px;
-}
-
 .dashboard-page {
   min-height: 100vh;
   background-color: white;
   padding: 2rem 0;
 }
 
-.dashboard-page .dashboard-content {
+.dashboard-content {
   max-width: 75rem;
   margin-left: auto;
   margin-right: auto;
@@ -24,76 +12,81 @@
   padding-right: 1rem;
 }
 
-.dashboard-page .dashboard-grid {
+.dashboard-grid {
   background-color: #98e4d3;
   border-radius: 1.5rem;
   padding: 2rem;
 }
 
-.dashboard-page .dashboard-item {
+/* Important: Override grid layout z-index */
+.react-grid-item {
+  z-index: auto !important;
+}
+
+.dashboard-item {
   background-color: rgba(255, 255, 255, 0.7);
   border-radius: 1rem;
   overflow: hidden;
   height: 100%;
+  /* Important: Ensure content is clickable */
+  position: relative;
+  z-index: 1;
 }
 
-.dashboard-page .social-feed {
+/* Make sure content is above grid layout */
+.dashboard-item > div {
+  position: relative;
+  z-index: 2;
+}
+
+.social-feed {
   background-color: rgba(212, 231, 170, 0.7);
 }
 
-.dashboard-page .music-player {
+.music-player {
   background-color: rgba(247, 203, 163, 0.7);
 }
 
-.dashboard-page .music-news {
+.music-news {
   background-color: rgba(255, 181, 181, 0.7);
 }
 
-.dashboard-page .blog-feed {
+.blog-feed {
   background-color: rgba(255, 255, 255, 0.7);
 }
 
-.blog-post-image {
-  width: 100%;
-  max-height: 300px;
-  object-fit: cover;
-  border-radius: 8px;
-  margin-bottom: 1.5rem;
+/* Important: Make buttons clickable */
+button, 
+a {
+  position: relative;
+  z-index: 3;
+  cursor: pointer;
 }
 
-.blog-post-image:hover {
-  transform: scale(1.02);
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-  transition: all 0.3s ease;
+/* Ensure hover states work */
+button:hover {
+  opacity: 0.9;
 }
 
-.weekly-playlist {
-  background: white;
-  border-radius: 1rem;
-  box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+/* Fix overflow scrolling */
+.overflow-y-auto {
+  z-index: 2;
+  position: relative;
 }
 
-.dashboard-item {
-  background: white;
-  border-radius: 1rem;
-  overflow: hidden;
-  box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+/* Fix grid placeholder */
+.react-grid-placeholder {
+  z-index: 0 !important;
 }
 
-.dashboard-grid {
-  min-height: calc(100vh - 200px);
+/* Fix grid resizable handle */
+.react-resizable-handle {
+  z-index: 2 !important;
 }
 
-@media (min-width: 640px) {
-  .dashboard-page .dashboard-content {
-    padding-left: 1.5rem;
-    padding-right: 1.5rem;
-  }
-}
-
-@media (min-width: 1024px) {
-  .dashboard-page .dashboard-content {
-    padding-left: 2rem;
-    padding-right: 2rem;
-  }
+/* Make sure form inputs are clickable */
+input, 
+textarea {
+  position: relative;
+  z-index: 3;
 }
