@@ -21,7 +21,6 @@ const userSchema = new mongoose.Schema({
     enum: ['user', 'admin'],
     default: 'user'
   },
-  // Spotify related fields
   spotifyAccessToken: { 
     type: String,
     default: null
@@ -38,8 +37,6 @@ const userSchema = new mongoose.Schema({
     type: String,
     default: null
   },
-  
-  // Other user fields
   profilePicture: {
     type: String,
     default: '/default-profile.png'

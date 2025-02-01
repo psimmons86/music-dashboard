@@ -4,11 +4,9 @@ const blogController = require('../controllers/blog');
 const checkToken = require('../middleware/checkToken');
 const ensureLoggedIn = require('../middleware/ensureLoggedIn');
 
-// Public routes (no auth required)
 router.get('/', blogController.getAll);
 router.get('/:id', blogController.getOne);
 
-// Protected routes (require login only)
 router.use(checkToken);
 router.use(ensureLoggedIn);
 

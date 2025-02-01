@@ -8,9 +8,6 @@ import './DashboardPage.css';
 
 const ResponsiveGridLayout = WidthProvider(Responsive);
 
-// Services
-import * as postService from '../../services/postService';
-
 // Components
 import PostForm from '../../components/PostForm/PostForm';
 import PostItem from '../../components/PostItem/PostItem';
@@ -20,9 +17,9 @@ import WeeklyPlaylist from '../../components/WeeklyPlaylist/WeeklyPlaylist';
 import BlogFeed from '../../components/BlogFeed/BlogFeed';
 import PlaylistCard from '../../components/PlaylistCard/PlaylistCard';
 
+// Services
+import * as postService from '../../services/postService';
 
-
-// Default layout configuration
 const DEFAULT_LAYOUTS = {
   lg: [
     { i: 'social', x: 0, y: 0, w: 12, h: 12 },
@@ -34,8 +31,6 @@ const DEFAULT_LAYOUTS = {
 };
 
 export default function DashboardPage({ spotifyStatus, onSpotifyUpdate }) {
-  
-  // State management
   const [posts, setPosts] = useState([]);
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(true);
@@ -49,19 +44,6 @@ export default function DashboardPage({ spotifyStatus, onSpotifyUpdate }) {
     }
   });
 
-  // Drag State
-
-  const [isDragging, setIsDragging] = useState(false);
-
-  const handleDragStart = () => {
-    setIsDragging(true);
-  };
-
-  const handleDragStop = () => {
-    setIsDragging(false);
-  };
-
-  // Fetch posts
   const fetchPosts = useCallback(async () => {
     try {
       setError('');
@@ -79,7 +61,6 @@ export default function DashboardPage({ spotifyStatus, onSpotifyUpdate }) {
     fetchPosts();
   }, [fetchPosts]);
 
-  // Post management functions
   const handleCreatePost = async (postData) => {
     try {
       setError('');
@@ -102,7 +83,6 @@ export default function DashboardPage({ spotifyStatus, onSpotifyUpdate }) {
     }
   };
 
-  // Layout persistence
   const handleLayoutChange = (layout, layouts) => {
     try {
       setLayouts(layouts);
@@ -112,7 +92,6 @@ export default function DashboardPage({ spotifyStatus, onSpotifyUpdate }) {
     }
   };
 
-  // Loading state
   if (isLoading) {
     return (
       <div className="min-h-screen bg-gray-50 p-4 flex items-center justify-center">
@@ -137,117 +116,102 @@ export default function DashboardPage({ spotifyStatus, onSpotifyUpdate }) {
             isResizable={true}
             margin={[16, 16]}
             draggableHandle=".drag-handle"
-            onDragStart={handleDragStart}
-            onDragStop={handleDragStop}
           >
             {/* Social Feed Section */}
             <div key="social" className="dashboard-item social-feed">
-              <div className="p-6 h-full flex flex-col">
-                <div className="drag-handle flex justify-between items-center mb-6">
-                  <h2 className="font-sans text-xl font-semibold text-gray-800 flex items-center gap-2">
+              <div className="drag-handle">
+                <div className="flex justify-between items-center">
+                  <div className="flex items-center gap-2">
                     <Users size={20} />
-                    Social Feed
-                  </h2>
-                  <button
-                    onClick={(e) => {
-                      e.preventDefault();
-                      e.stopPropagation();
-                      window.location.href = '/blog/create';
-                    }}
-                    className="text-emerald-600 hover:text-emerald-700 text-sm font-medium pointer-events-auto"
-                    disabled={isDragging}
+                    <h2 className="font-sans text-xl font-semibold text-gray-800">Social Feed</h2>
+                  </div>
+                  <Link
+                    to="/blog/create"
+                    className="text-emerald-600 hover:text-emerald-700 text-sm font-medium"
                   >
                     Write Blog Post
-                  </button>
+                  </Link>
                 </div>
-                <div className="pointer-events-auto flex-1 overflow-hidden">
-                  <PostForm onSubmit={handleCreatePost} />
-                  <div className="h-full overflow-y-auto pr-2 space-y-4">
-                    {posts.map((post) => (
-                      <PostItem
-                        key={post._id}
-                        post={post}
-                        onDelete={handleDeletePost}
-                      />
-                    ))}
-                  </div>
+              </div>
+              <div className="dashboard-content-area">
+                <PostForm onSubmit={handleCreatePost} />
+                <div className="space-y-4">
+                  {posts.map((post) => (
+                    <PostItem
+                      key={post._id}
+                      post={post}
+                      onDelete={handleDeletePost}
+                    />
+                  ))}
                 </div>
               </div>
             </div>
 
             {/* Music Player Section */}
             <div key="music" className="dashboard-item music-player">
-              <div className="p-6 h-full flex flex-col">
-                <h2 className="font-sans text-xl font-semibold text-gray-800 mb-6 flex items-center gap-2">
+              <div className="drag-handle">
+                <div className="flex items-center gap-2">
                   <Music size={20} />
-                  Music Player
-                </h2>
-                <div className="flex-1 overflow-y-auto">
-                  {spotifyStatus?.connected ? (
-                    <PlaylistCard
-                      title="Create Daily Mix"
-                      actionButtonText="Generate Playlist"
-                      loadingText="Creating your mix..."
-                      onPlaylistCreated={(playlist) => {
-                        console.log('Playlist created:', playlist);
-                      }}
-                    />
-                  ) : (
-                    <div className="text-center">
-                      <p className="text-gray-600 text-sm mb-6">
-                        Connect Spotify to access your music
-                      </p>
-                      <SpotifyConnect 
-                        onSuccess={onSpotifyUpdate}
-                      />
-                    </div>
-                  )}
+                  <h2 className="font-sans text-xl font-semibold text-gray-800">Music Player</h2>
                 </div>
+              </div>
+              <div className="dashboard-content-area">
+                {spotifyStatus?.connected ? (
+                  <PlaylistCard
+                    title="Create Daily Mix"
+                    actionButtonText="Generate Playlist"
+                    loadingText="Creating your mix..."
+                    onPlaylistCreated={(playlist) => {
+                      console.log('Playlist created:', playlist);
+                    }}
+                  />
+                ) : (
+                  <div className="text-center">
+                    <p className="text-gray-600 text-sm mb-6">
+                      Connect Spotify to access your music
+                    </p>
+                    <SpotifyConnect onSuccess={onSpotifyUpdate} />
+                  </div>
+                )}
               </div>
             </div>
 
             {/* Weekly Playlist Section */}
-            <div key="playlist" className="dashboard-item weekly-playlist">
-              <div className="p-6 h-full flex flex-col">
-                <h2 className="font-sans text-xl font-semibold text-gray-800 mb-6 flex items-center gap-2">
+            <div key="playlist" className="dashboard-item">
+              <div className="drag-handle">
+                <div className="flex items-center gap-2">
                   <Crown size={20} />
-                  Weekly Playlist
-                </h2>
-                <div className="flex-1 overflow-hidden">
-                  <div className="h-full overflow-y-auto pr-2">
-                    <WeeklyPlaylist />
-                  </div>
+                  <h2 className="font-sans text-xl font-semibold text-gray-800">Weekly Playlist</h2>
                 </div>
+              </div>
+              <div className="dashboard-content-area">
+                <WeeklyPlaylist />
               </div>
             </div>
 
             {/* News Section */}
             <div key="news" className="dashboard-item music-news">
-              <div className="p-6 h-full flex flex-col">
-                <h2 className="font-sans text-xl font-semibold text-gray-800 mb-6 flex items-center gap-2">
+              <div className="drag-handle">
+                <div className="flex items-center gap-2">
                   <Newspaper size={20} />
-                  Music News
-                </h2>
-                <div className="flex-1 overflow-hidden">
-                  <div className="h-full overflow-y-auto pr-2">
-                    <NewsFeed />
-                  </div>
+                  <h2 className="font-sans text-xl font-semibold text-gray-800">Music News</h2>
                 </div>
+              </div>
+              <div className="dashboard-content-area">
+                <NewsFeed />
               </div>
             </div>
 
             {/* Blog Feed Section */}
             <div key="blogs" className="dashboard-item blog-feed">
-              <div className="p-6 h-full flex flex-col">
-                <h2 className="font-sans text-xl font-semibold text-gray-800 mb-6 flex items-center gap-2">
+              <div className="drag-handle">
+                <div className="flex items-center gap-2">
                   <FileText size={20} />
-                  Daily Dispatch
-                </h2>
-                <div className="flex-1 overflow-hidden">
-                  <div className="h-full overflow-y-auto pr-2">
-                    <BlogFeed />
-                  </div>
+                  <h2 className="font-sans text-xl font-semibold text-gray-800">Daily Dispatch</h2>
                 </div>
+              </div>
+              <div className="dashboard-content-area">
+                <BlogFeed />
               </div>
             </div>
           </ResponsiveGridLayout>

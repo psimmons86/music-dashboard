@@ -1,3 +1,4 @@
+/* DashboardPage.css */
 .dashboard-page {
   min-height: 100vh;
   background-color: white;
@@ -18,25 +19,27 @@
   padding: 2rem;
 }
 
-/* Important: Override grid layout z-index */
-.react-grid-item {
-  z-index: auto !important;
-}
-
 .dashboard-item {
   background-color: rgba(255, 255, 255, 0.7);
   border-radius: 1rem;
   overflow: hidden;
   height: 100%;
-  /* Important: Ensure content is clickable */
-  position: relative;
-  z-index: 1;
+  display: flex;
+  flex-direction: column;
 }
 
-/* Make sure content is above grid layout */
-.dashboard-item > div {
-  position: relative;
-  z-index: 2;
+.drag-handle {
+  padding: 1.5rem;
+  cursor: move;
+  background: rgba(255, 255, 255, 0.5);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+  user-select: none;
+}
+
+.dashboard-content-area {
+  flex: 1;
+  overflow-y: auto;
+  padding: 1.5rem;
 }
 
 .social-feed {
@@ -55,23 +58,10 @@
   background-color: rgba(255, 255, 255, 0.7);
 }
 
-/* Important: Make buttons clickable */
-button, 
-a {
+/* Make sure content is clickable */
+.dashboard-content-area {
   position: relative;
-  z-index: 3;
-  cursor: pointer;
-}
-
-/* Ensure hover states work */
-button:hover {
-  opacity: 0.9;
-}
-
-/* Fix overflow scrolling */
-.overflow-y-auto {
-  z-index: 2;
-  position: relative;
+  z-index: 1;
 }
 
 /* Fix grid placeholder */
@@ -82,11 +72,4 @@ button:hover {
 /* Fix grid resizable handle */
 .react-resizable-handle {
   z-index: 2 !important;
-}
-
-/* Make sure form inputs are clickable */
-input, 
-textarea {
-  position: relative;
-  z-index: 3;
 }

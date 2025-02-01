@@ -5,11 +5,9 @@ const playlistCtrl = require('../controllers/playlist');
 const checkToken = require('../middleware/checkToken');
 const ensureLoggedIn = require('../middleware/ensureLoggedIn');
 
-// Public endpoints (no auth required)
 router.get('/connect', checkToken, spotifyCtrl.connect);
 router.post('/callback', checkToken, spotifyCtrl.callback);
 
-// Protected routes (auth required)
 router.use(checkToken);
 router.use(ensureLoggedIn);
 

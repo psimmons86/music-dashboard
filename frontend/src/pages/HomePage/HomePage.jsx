@@ -28,11 +28,10 @@ export default function HomePage() {
           <h2>Playlist Generator</h2>
           <div className="preview-content">
             <div className="mood-genres-preview">
-              <h3>Generate playlists by:</h3>
+              <h3>Generate random playlists: </h3>
               <ul>
-                <li>Mood (Happy, Chill, Energetic)</li>
-                <li>Genre (Rock, Jazz, Hip Hop, etc.)</li>
-                <li>Custom combinations</li>
+                <li>Past Favorites</li>
+                <li>Future Classics</li>
               </ul>
             </div>
           </div>
@@ -47,14 +46,9 @@ export default function HomePage() {
             <div className="features-list">
               <div className="feature-item">
                 <h3>1. Connect Spotify</h3>
-                <p>Link your Spotify account to enable playlist generation</p>
               </div>
               <div className="feature-item">
-                <h3>2. Choose Your Preferences</h3>
-                <p>Select mood and genre combinations</p>
-              </div>
-              <div className="feature-item">
-                <h3>3. Generate & Save</h3>
+                <h3>2. Generate & Save</h3>
                 <p>Create custom playlists and save favorite articles</p>
               </div>
             </div>
